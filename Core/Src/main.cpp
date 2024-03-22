@@ -26,6 +26,9 @@
 #include <stdlib.h>
 #include <iostream>
 #include <cstring>
+#include <cmath>
+using namespace std;
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +49,8 @@
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c3;
 
+TIM_HandleTypeDef htim3;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -63,9 +68,13 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2C3_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
+
+double euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *r2, uint16_t *g2, uint16_t *b2);
+
 
 /* USER CODE END PFP */
 
@@ -105,7 +114,12 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   MX_I2C3_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+
+
+
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 
   if (tcsFL.begin(TCS34725_ADDRESS, &hi2c1) && tcsFR.begin(TCS34725_ADDRESS, &hi2c3)) {
 	  debugStatus=0x55; //Found sensor
@@ -113,6 +127,13 @@ int main(void)
 	  debugStatus=0xAA; //Sensor not found
 	  while(1);
   }
+
+//  HAL_TIM_Base_Start(&htim3);
+//  if(HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1) != HAL_OK) {
+//	  Error_Handler();
+//  }
+//  HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_ALL);
+
 
   HAL_Delay(1000);
   // Construction Check - Move Forward, Backwards, Turn
@@ -169,47 +190,136 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
 	  uint16_t r1, g1, b1, c1, colorTempFL, luxFL;
 	  uint16_t r2, g2, b2, c2, colorTempFR, luxFR;
+
+	  //Green
+	  uint16_t GREEN_R = 50;
+	  uint16_t GREEN_G = 115;
+	  uint16_t GREEN_B = 88;
+
 
 	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
 	  getRawData_noDelay(&tcsFR, &r2, &g2, &b2, &c2);
 
-	  colorTempFL = tcsFL.calculateColorTemperature(r1, g1, b1);
-
-	  colorTempFR = tcsFR.calculateColorTemperature(r2, g2, b2);
-
-	  luxFL = tcsFL.calculateLux(r1, g1, b1);
-	  luxFR = tcsFR.calculateLux(r2, g2, b2);
-
-	  char txtFL[80]={0};
-	  char txtFR[80]={0};
-	  char buf[64];
-	  sprintf(buf, "Value of counter: %d\r\n", a);
+	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
+	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
 
 
-	  snprintf(txtFL,80,"Color TempFL: %dK LUXFL: %d R: %d G: %d B: %d C: %d\n",colorTempFL,luxFL,r1,g1,b1,c1);
-	  snprintf(txtFR,80,"Color TempFR: %dK LUXFR: %d R: %d G: %d B: %d C: %d\n",colorTempFR,luxFR,r2,g2,b2,c2);
+	  //colorTempFL = tcsFL.calculateColorTemperature(r1, g1, b1);
 
-	  if(g1 > 130) { //add b and g values so it doesnt go while it sees white color too. set to g since test track is green
-		  //Right
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-	  } else if (g2 > 130){
-      //Left
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-    } else {
-      //Forwards
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-    }
+	  //colorTempFR = tcsFR.calculateColorTemperature(r2, g2, b2);
+
+	  //luxFL = tcsFL.calculateLux(r1, g1, b1);
+	  //luxFR = tcsFR.calculateLux(r2, g2, b2);
+
+	  //char txtFL[80]={0};
+	  //char txtFR[80]={0};
+//	  char buf[64];
+//	  sprintf(buf, "Value of counter: %d\r\n", a);
+
+
+	  //snprintf(txtFL,80,"Color TempFL: %dK LUXFL: %d R: %d G: %d B: %d C: %d\n",colorTempFL,luxFL,r1,g1,b1,c1);
+	 // snprintf(txtFR,80,"Color TempFR: %dK LUXFR: %d R: %d G: %d B: %d C: %d\n",colorTempFR,luxFR,r2,g2,b2,c2);
+
+
+
+
+
+
+
+
+
+
+
+//	if(colorReading1 < 20) { //add b and g values so it doesnt go while it sees white color too. set to g since test track is green
+//		  //Right
+////      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+////      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+////      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+////      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//	} else if (colorReading2 < 20){
+//      //Left
+////      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+////      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+////      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+////      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//    } else {
+//      //Forwards
+//      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+//      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+//      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+//      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//    }
+
+
+
+
+
+
+
+	  //1 meter speed test
+	  if(r1 > 100 || r2 > 100) {
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+		  HAL_Delay(3000);
+	  }
+
+
+
+
+
+//	//Condition for Using Claw
+//	//Servo info
+//	/*
+//	 *Position "0" (1.5 ms pulse) is the middle position. 7.5%
+//	 *Position Position "90" (~2 ms pulse) is all the way to the right. 10%
+//	 *Position Position "-90" (~1 ms pulse) is all the way to the left. 5%
+//	 *
+//	 */
+//	if(r1 > 100 || r2 > 100) {
+//		// Use Claw to grab LEGO figure
+//
+//		uint32_t pulseWidth = 0.10*65535;
+//		// /0.05 * 65535?
+//
+//		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+//
+//		HAL_Delay(3000);
+////		//drive forward for 1s
+////		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+////		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+////		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+////		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+////
+////		//Use Claw to release LEGO figure
+////		pulseWidth = 0.075*65535;
+////		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+////		HAL_Delay(1000);
+//
+//		pulseWidth = 0.05*65535;
+//		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+//		HAL_Delay(1000);
+//	}
+
+
+
+
+
+
+
+
 
 //	  HAL_UART_Transmit(&huart2, (const uint8_t*)txtFL, strlen(txtFL), HAL_MAX_DELAY);
 //	  HAL_UART_Transmit(&huart2, (const uint8_t*)txtFR, strlen(txtFR), HAL_MAX_DELAY);
@@ -336,6 +446,56 @@ static void MX_I2C3_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 25;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -432,7 +592,7 @@ void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16
   *g = tcs->read16(TCS34725_GDATAL);
   *b = tcs->read16(TCS34725_BDATAL);
 
-  HAL_Delay(100);
+  HAL_Delay(1);
 
   uint32_t sum = *c;
 
@@ -445,6 +605,14 @@ void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16
     *r = (float)*r / sum * 255.0;
     *g = (float)*g / sum * 255.0;
     *b = (float)*b / sum * 255.0;
+}
+
+double euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *r2, uint16_t *g2, uint16_t *b2) {
+	int16_t deltaR = *r1 - *r2;
+	int16_t deltaG = *g1 - *g2;
+	int16_t deltaB = *b1 - *b2;
+
+    return sqrt(pow(deltaR, 2)+ pow(deltaG, 2) + pow(deltaB, 2));
 }
 
 /* USER CODE END 4 */
