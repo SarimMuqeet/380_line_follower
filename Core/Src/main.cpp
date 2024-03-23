@@ -75,7 +75,7 @@ static void MX_TIM2_Init(void);
 
 void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
 
-double euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *r2, uint16_t *g2, uint16_t *b2);
+int16_t euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *RGB1[3], uint16_t *RGB2[3]);
 
 
 /* USER CODE END PFP */
@@ -120,10 +120,7 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-
-
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 
@@ -198,14 +195,14 @@ int main(void)
   while (1)
   {
 
-	  uint16_t r1, g1, b1, c1, colorTempFL, luxFL;
-	  uint16_t r2, g2, b2, c2, colorTempFR, luxFR;
+	  uint16_t r1, g1, b1, c1;
+	  uint16_t r2, g2, b2, c2;
 
-	  //Green
-	  uint16_t GREEN_R = 50;
-	  uint16_t GREEN_G = 115;
-	  uint16_t GREEN_B = 88;
-
+	  //Track Constant RGB Values
+    const uint16_t REDLINE[3] = {255, 255, 255};
+    const uint16_t GREENZONE[3] = {255, 255, 255};
+    const uint16_t BULLSEYE_BLUE[3] = {255, 255, 255};
+    const uint16_t WOOD[3] = {255, 255, 255};
 
 	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
 	  getRawData_noDelay(&tcsFR, &r2, &g2, &b2, &c2);
@@ -213,22 +210,12 @@ int main(void)
 	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
 	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
 
-
-	  colorTempFL = tcsFL.calculateColorTemperature(r1, g1, b1);
-
-	  colorTempFR = tcsFR.calculateColorTemperature(r2, g2, b2);
-
-	  luxFL = tcsFL.calculateLux(r1, g1, b1);
-	  luxFR = tcsFR.calculateLux(r2, g2, b2);
-
 	  char txtFL[80]={0};
 	  char txtFR[80]={0};
 	  char buf[64];
-//	  sprintf(buf, "Value of counter: %d\r\n", a);
 
-
-	  snprintf(txtFL,80,"Color TempFL: %dK LUXFL: %d R: %d G: %d B: %d C: %d\n",colorTempFL,luxFL,r1,g1,b1,c1);
-	  snprintf(txtFR,80,"Color TempFR: %dK LUXFR: %d R: %d G: %d B: %d C: %d\n",colorTempFR,luxFR,r2,g2,b2,c2);
+	  snprintf(txtFL,80,"R: %d G: %d B: %d\n",r1,g1,b1);
+	  snprintf(txtFR,80,"R: %d G: %d B: %d\n",r2,g2,b2);
 
 
 
@@ -700,12 +687,20 @@ void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16
     *b = (float)*b / sum * 255.0;
 }
 
-double euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *r2, uint16_t *g2, uint16_t *b2) {
-	int16_t deltaR = *r1 - *r2;
-	int16_t deltaG = 3*(*g1 - *g2);
-	int16_t deltaB = *b1 - *b2;
+int16_t euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *RGB1[3], uint16_t *RGB2[3]) {
+	int16_t deltaR1 = *r1 - *RGB1[0];
+	int16_t deltaG1 = *g1 - *RGB1[1];
+	int16_t deltaB1 = *b1 - *RGB1[2];
+  int16_t deltaR2 = *r2 - *RGB2[0];
+	int16_t deltaG2 = *g2 - *RGB2[1];
+	int16_t deltaB2 = *b2 - *RGB2[2];
 
-    return sqrt(pow(deltaR, 2)+ pow(deltaG, 2) + pow(deltaB, 2));
+    double distance1 sqrt(pow(deltaR1, 2)+ pow(deltaG1, 2) + pow(deltaB1, 2));
+    double distance2 sqrt(pow(deltaR2, 2)+ pow(deltaG2, 2) + pow(deltaB2, 2));
+
+    double totalDistance = distance1+distance2;
+
+    return position = (distance1/totalDistance)*100;
 }
 
 /* USER CODE END 4 */
