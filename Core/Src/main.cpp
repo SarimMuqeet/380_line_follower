@@ -77,6 +77,18 @@ void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16
 
 int16_t euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *RGB1[3], uint16_t *RGB2[3]);
 
+// Movement Functions
+void moveForward(uint32_t *dutyCycle);
+
+void moveBackward(uint32_t *dutyCycle);
+
+void moveLeft(uint32_t *dutyCycle);
+
+void moveRight(uint32_t *dutyCycle);
+
+void stop();
+
+
 
 /* USER CODE END PFP */
 
@@ -132,61 +144,13 @@ int main(void)
 	  while(1);
   }
 
+// Start TIM
+
 //  HAL_TIM_Base_Start(&htim3);
 //  if(HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1) != HAL_OK) {
 //	  Error_Handler();
 //  }
-//  HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_ALL);
-
-
-  HAL_Delay(1000);
-  // Construction Check - Move Forward, Backwards, Turn
-  //Left
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-  // HAL_Delay(1000);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-  // HAL_Delay(1000);
-  // //Backwards
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-  // HAL_Delay(1000);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-  // HAL_Delay(1000);
-  // //Right
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-  // HAL_Delay(1000);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-  // HAL_Delay(1000);
-  // //Forwards
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-  // HAL_Delay(1000);
-  // //Stop movement
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-  // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-
-  // HAL_Delay(3000);
+//  HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_ALL);  
 
   /* USER CODE END 2 */
 
@@ -195,115 +159,31 @@ int main(void)
   while (1)
   {
 
+    // Color readings variables
 	  uint16_t r1, g1, b1, c1;
 	  uint16_t r2, g2, b2, c2;
 
-	  //Track Constant RGB Values
+	  // Track Constant RGB Values
     const uint16_t REDLINE[3] = {255, 255, 255};
     const uint16_t GREENZONE[3] = {255, 255, 255};
     const uint16_t BULLSEYE_BLUE[3] = {255, 255, 255};
     const uint16_t WOOD[3] = {255, 255, 255};
 
+    // Get RGB Values
 	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
 	  getRawData_noDelay(&tcsFR, &r2, &g2, &b2, &c2);
 
-	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
-	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
+    // Get Color Reading
+	  uint16_t colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
+	  uint16_t colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
 
 	  char txtFL[80]={0};
 	  char txtFR[80]={0};
-	  char buf[64];
 
 	  snprintf(txtFL,80,"R: %d G: %d B: %d\n",r1,g1,b1);
 	  snprintf(txtFR,80,"R: %d G: %d B: %d\n",r2,g2,b2);
 
-
-
-
-
-
-
-
-
-
-	  //Line Follow ------------------------------------ //
-
-//	  uint32_t dutyCycle = 0.32*65535;
-//	if(colorReading1 < 40) { //add b and g values so it doesnt go while it sees white color too. set to g since test track is green
-//		  //Right
-////      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-////      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-////      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-////      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-////		uint32_t dutyCycle = 0.2*4200;
-////		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
-////		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
-//
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
-//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-//       HAL_Delay(100);
-//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-//	} else if (colorReading2 < 40){
-//      //Left
-////      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-////      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-////      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-////      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-////		uint32_t dutyCycle = 0.2*4200;
-////		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
-////		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
-//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-//       HAL_Delay(100);
-//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-//       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-//    } else {
-//      //backwards
-////    	uint32_t dutyCycle = 0.2*4200;
-////    	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
-////    	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
-//      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-//      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-//      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-//      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-//    }
-
-
-
-
-
-
-
-	  //1 meter speed test ----------------------------- //
-
-	  if(r1 > 100 || r2 > 100) {
-//		uint32_t dutyCycle = 0.45*65535;
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-		  HAL_Delay(3000);
-	  }
-
-
-
+	  // Line Follow 
 
 
 //	//Condition for Using Claw --------------------------- //
@@ -340,22 +220,7 @@ int main(void)
 //		HAL_Delay(1000);
 //	}
 
-
-
-
-
-
-
-
-
-//	  HAL_UART_Transmit(&huart2, (const uint8_t*)txtFL, strlen(txtFL), HAL_MAX_DELAY);
-//	  HAL_UART_Transmit(&huart2, (const uint8_t*)txtFR, strlen(txtFR), HAL_MAX_DELAY);
-
-	  /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
   }
-  /* USER CODE END 3 */
 }
 
 /**
@@ -701,6 +566,50 @@ int16_t euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *RG
     double totalDistance = distance1+distance2;
 
     return position = (distance1/totalDistance)*100;
+}
+
+// Movement Functions
+void moveForward(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+}
+
+void moveBackward(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+}
+
+void moveLeft(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+}
+
+void moveRight(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+}
+
+void stop(){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
 }
 
 /* USER CODE END 4 */
