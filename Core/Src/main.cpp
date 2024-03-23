@@ -88,6 +88,11 @@ void moveRight(uint32_t *dutyCycle);
 
 void stop();
 
+// Claw Functions
+void grab();
+
+void release();
+
 
 
 /* USER CODE END PFP */
@@ -183,42 +188,34 @@ int main(void)
 	  snprintf(txtFL,80,"R: %d G: %d B: %d\n",r1,g1,b1);
 	  snprintf(txtFR,80,"R: %d G: %d B: %d\n",r2,g2,b2);
 
-	  // Line Follow 
+	  // Testing movement
+    uint32_t dutyCycle = 0.32*65535;
+
+    moveForward(dutyCycle);
+    HAL_Delay(1000);
+    stop();
+
+    moveLeft(dutyCycle);
+    HAL_Delay(1000);
+    stop();
+
+    moveRight(dutyCycle);
+    HAL_Delay(1000);
+    stop();
+
+    moveBackward(dutyCycle);
+    HAL_Delay(1000);
+    stop();
+
+    // Test Claw
+    grab();
+
+    release();
+
+    
 
 
-//	//Condition for Using Claw --------------------------- //
-//
-//	//Servo info
-//	/*
-//	 *Position "0" (1.5 ms pulse) is the middle position. 7.5%
-//	 *Position Position "90" (~2 ms pulse) is all the way to the right. 10%
-//	 *Position Position "-90" (~1 ms pulse) is all the way to the left. 5%
-//	 *
-//	 */
-//	if(r1 > 100 || r2 > 100) {
-//		// Use Claw to grab LEGO figure
-//
-//		uint32_t pulseWidth = 0.10*65535;
-//		// /0.05 * 65535?
-//
-//		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
-//
-//		HAL_Delay(3000);
-////		//drive forward for 1s
-////		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-////		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-////		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-////		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-////
-////		//Use Claw to release LEGO figure
-////		pulseWidth = 0.075*65535;
-////		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
-////		HAL_Delay(1000);
-//
-//		pulseWidth = 0.05*65535;
-//		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
-//		HAL_Delay(1000);
-//	}
+
 
   }
 }
@@ -552,13 +549,13 @@ void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16
     *b = (float)*b / sum * 255.0;
 }
 
-int16_t euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *RGB1[3], uint16_t *RGB2[3]) {
-	int16_t deltaR1 = *r1 - *RGB1[0];
-	int16_t deltaG1 = *g1 - *RGB1[1];
-	int16_t deltaB1 = *b1 - *RGB1[2];
-  int16_t deltaR2 = *r2 - *RGB2[0];
-	int16_t deltaG2 = *g2 - *RGB2[1];
-	int16_t deltaB2 = *b2 - *RGB2[2];
+int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *RGB1[3], uint16_t *RGB2[3]) {
+	int16_t deltaR1 = *r - *RGB1[0];
+	int16_t deltaG1 = *g - *RGB1[1];
+	int16_t deltaB1 = *b - *RGB1[2];
+  int16_t deltaR2 = *r - *RGB2[0];
+	int16_t deltaG2 = *g - *RGB2[1];
+	int16_t deltaB2 = *b - *RGB2[2];
 
     double distance1 sqrt(pow(deltaR1, 2)+ pow(deltaG1, 2) + pow(deltaB1, 2));
     double distance2 sqrt(pow(deltaR2, 2)+ pow(deltaG2, 2) + pow(deltaB2, 2));
@@ -610,6 +607,17 @@ void stop(){
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+}
+
+// Claw Functions
+void grab(){
+  uint32_t pulseWidth = 0.10*65535;
+	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+}
+
+void release(){
+  uint32_t pulseWidth = 0.05*65535;
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
 }
 
 /* USER CODE END 4 */
