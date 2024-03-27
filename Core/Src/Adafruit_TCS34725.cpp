@@ -48,6 +48,24 @@ float powf(const float x, const float y) {
 
 
 
+
+
+// -------- Custom MUX Helper Functions ------------ //
+
+/*
+ *
+ *
+ */
+
+void Adafruit_TCS34725::setMuxChannel(uint8_t channel) {
+	HAL_I2C_Master_Transmit(_hi2c, (uint16_t)MUX_ADDRESS<<1, &channel, 1, HAL_MAX_DELAY);
+}
+
+
+
+// -------------------------------------------------- //
+
+
 /*!
  *  @brief  Writes a register and an 8 bit value over I2C
  *  @param  reg
@@ -58,6 +76,8 @@ void Adafruit_TCS34725::write8(uint8_t reg, uint32_t value) {
 //    if(HAL_I2C_Mem_Write(&hi2c1, (uint16_t)_i2caddr<<1, TCS34725_COMMAND_BIT | reg, 1, &data, 1, 100) != HAL_OK){
 //        while(1);
 //    }
+    setMuxChannel(_muxChannel);
+
     if(HAL_I2C_Mem_Write(_hi2c, (uint16_t)_i2caddr<<1, TCS34725_COMMAND_BIT | reg, 1, &data, 1, 100) != HAL_OK){
         while(1);
     }
@@ -81,6 +101,9 @@ uint8_t Adafruit_TCS34725::read8(uint8_t reg) {
 //    if(HAL_I2C_Mem_Read(&hi2c1, (uint16_t)_i2caddr<<1, TCS34725_COMMAND_BIT | reg, 1, &data, 1, 100) != HAL_OK){
 //        while(1);
 //    }
+    setMuxChannel(_muxChannel);
+//    HAL_Delay(1000);
+
     if(HAL_I2C_Mem_Read(_hi2c, (uint16_t)_i2caddr<<1, TCS34725_COMMAND_BIT | reg, 1, &data, 1, 100) != HAL_OK){
         while(1);
     }
@@ -101,6 +124,9 @@ uint8_t Adafruit_TCS34725::read8(uint8_t reg) {
  *  @return value
  */
 uint16_t Adafruit_TCS34725::read16(uint8_t reg) {
+
+    setMuxChannel(_muxChannel);
+
   uint16_t x;
   uint16_t t;
   uint8_t data[2];
@@ -203,6 +229,23 @@ bool Adafruit_TCS34725::begin(uint8_t addr, I2C_HandleTypeDef *hi2c) {
 
 /*!
  *  @brief  Initializes I2C and configures the sensor
+ *  @param  addr
+ *          i2c address
+ *  @param  *hi2C
+ *  @param	*muxAddr
+ *  @return True if initialization was successful, otherwise false.
+ */
+bool Adafruit_TCS34725::begin(uint8_t addr, I2C_HandleTypeDef *hi2c, uint8_t muxChannel) {
+  _i2caddr = addr;
+  _muxChannel = muxChannel;
+  _hi2c = hi2c;
+
+  return init();
+}
+
+
+/*!
+ *  @brief  Initializes I2C and configures the sensor
  *  @return True if initialization was successful, otherwise false.
  */
 bool Adafruit_TCS34725::begin() {
@@ -217,6 +260,8 @@ bool Adafruit_TCS34725::begin() {
  *  @return True if initialization was successful, otherwise false.
  */
 bool Adafruit_TCS34725::init() {
+
+//	setMuxChannel(_muxChannel);
 
   /* Make sure we're actually connected */
 
@@ -284,6 +329,9 @@ void Adafruit_TCS34725::getRawData(uint16_t *r, uint16_t *g, uint16_t *b,
   if (!_tcs34725Initialised)
     begin();
 
+  //need to set mux channel before read/write operations
+  setMuxChannel(_muxChannel);
+
   *c = read16(TCS34725_CDATAL);
   *r = read16(TCS34725_RDATAL);
   *g = read16(TCS34725_GDATAL);
@@ -329,6 +377,8 @@ void Adafruit_TCS34725::getRawDataOneShot(uint16_t *r, uint16_t *g, uint16_t *b,
                                           uint16_t *c) {
   if (!_tcs34725Initialised)
     begin();
+
+  setMuxChannel(_muxChannel);
 
   enable();
   getRawData(r, g, b, c);
@@ -555,3 +605,5 @@ void Adafruit_TCS34725::setIntLimits(uint16_t low, uint16_t high) {
   write8(0x06, high & 0xFF);
   write8(0x07, high >> 8);
 }
+
+

@@ -1,16 +1,16 @@
 c:\st\stm32cubeide_1.11.2\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.100.202210260954\tools\bin\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include/c++/10.3.1/arm-none-eabi/thumb/v7e-m+fp/hard/bits/gthr-default.h:229:1:int __gthread_key_delete(__gthread_key_t)	16	static
-../Core/Src/main.cpp:92:5:int main()	256	static
-../Core/Src/main.cpp:378:6:void SystemClock_Config()	88	static
-../Core/Src/main.cpp:425:13:void MX_I2C1_Init()	8	static
-../Core/Src/main.cpp:459:13:void MX_I2C3_Init()	8	static
-../Core/Src/main.cpp:493:13:void MX_TIM2_Init()	48	static
-../Core/Src/main.cpp:546:13:void MX_TIM3_Init()	48	static
-../Core/Src/main.cpp:596:13:void MX_USART2_UART_Init()	8	static
-../Core/Src/main.cpp:629:13:void MX_GPIO_Init()	48	static
-../Core/Src/main.cpp:681:6:void getRawData_noDelay(Adafruit_TCS34725*, uint16_t*, uint16_t*, uint16_t*, uint16_t*)	32	static
-../Core/Src/main.cpp:703:8:double euclideanDistance(uint16_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*)	40	static
-../Core/Src/main.cpp:717:6:void Error_Handler()	4	static,ignoring_inline_asm
+../Core/Src/main.cpp:95:5:int main()	368	static
+../Core/Src/main.cpp:401:6:void SystemClock_Config()	88	static
+../Core/Src/main.cpp:448:13:void MX_I2C1_Init()	8	static
+../Core/Src/main.cpp:482:13:void MX_I2C3_Init()	8	static
+../Core/Src/main.cpp:516:13:void MX_TIM2_Init()	48	static
+../Core/Src/main.cpp:569:13:void MX_TIM3_Init()	48	static
+../Core/Src/main.cpp:619:13:void MX_USART2_UART_Init()	8	static
+../Core/Src/main.cpp:652:13:void MX_GPIO_Init()	48	static
+../Core/Src/main.cpp:704:6:void getRawData_noDelay(Adafruit_TCS34725*, uint16_t*, uint16_t*, uint16_t*, uint16_t*)	32	static
+../Core/Src/main.cpp:726:8:double euclideanDistance(uint16_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*)	40	static
+../Core/Src/main.cpp:740:6:void Error_Handler()	4	static,ignoring_inline_asm
 c:\st\stm32cubeide_1.11.2\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.100.202210260954\tools\arm-none-eabi\include\c++\10.3.1\cmath:415:5:constexpr typename __gnu_cxx::__promote_2<_Tp, _Up>::__type std::pow(_Tp, _Up) [with _Tp = short int; _Up = int]	24	static
-../Core/Src/main.cpp:726:1:void __static_initialization_and_destruction_0(int, int)	16	static
-../Core/Src/main.cpp:726:1:cpp)	8	static
-../Core/Src/main.cpp:726:1:cpp)	8	static
+../Core/Src/main.cpp:749:1:void __static_initialization_and_destruction_0(int, int)	16	static
+../Core/Src/main.cpp:749:1:cpp)	8	static
+../Core/Src/main.cpp:749:1:cpp)	8	static
