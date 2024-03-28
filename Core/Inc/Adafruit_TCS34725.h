@@ -33,6 +33,7 @@
 #ifndef _TCS34725_H_
 #define _TCS34725_H_
 
+#include <Adafruit_TCS34725.h>
 #include "stm32f4xx_hal.h"
 
 #define TCS34725_ADDRESS (0x29)     /**< I2C address **/
@@ -131,6 +132,10 @@
 #define TCS34725_BDATAL (0x1A) /**< Blue channel data low byte */
 #define TCS34725_BDATAH (0x1B) /**< Blue channel data high byte */
 
+
+//MUX Address
+#define MUX_ADDRESS (0x77)     /**< I2C address **/
+
 /** Integration time settings for TCS34725 */
 typedef enum {
   TCS34725_INTEGRATIONTIME_2_4MS =
@@ -164,7 +169,12 @@ public:
   Adafruit_TCS34725(tcs34725IntegrationTime_t = TCS34725_INTEGRATIONTIME_2_4MS,
                     tcs34725Gain_t = TCS34725_GAIN_1X);
 
+  //MUX helper Functions
+  void setMuxChannel(uint8_t channel);
+  // ---------- //
+
   bool begin(uint8_t addr, I2C_HandleTypeDef *hi2c);
+  bool begin(uint8_t addr, I2C_HandleTypeDef *hi2c, uint8_t muxChannel);
   bool begin(uint8_t addr);
   bool begin();
   bool init();
@@ -190,6 +200,7 @@ public:
 private:
   I2C_HandleTypeDef *_hi2c;
   uint8_t _i2caddr;
+  uint8_t _muxChannel;
   bool _tcs34725Initialised;
   tcs34725Gain_t _tcs34725Gain;
   tcs34725IntegrationTime_t _tcs34725IntegrationTime;

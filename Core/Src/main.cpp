@@ -58,7 +58,10 @@ UART_HandleTypeDef huart2;
 
 uint8_t debugStatus=0;
 uint8_t state=1;
+
+//potential cause of slow response (motors) when detecting colour
 Adafruit_TCS34725 tcsFL = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcsFC = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 Adafruit_TCS34725 tcsFR = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 
 /* USER CODE END PV */
@@ -127,8 +130,13 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 
+  uint8_t tcsFL_addr = 1;
+  uint8_t tcsFC_addr = 2;
+  uint8_t tcsFR_addr = 3;
 
-  if (tcsFL.begin(TCS34725_ADDRESS, &hi2c1) && tcsFR.begin(TCS34725_ADDRESS, &hi2c3)) {
+
+
+  if (tcsFL.begin(TCS34725_ADDRESS, &hi2c1, tcsFL_addr) && tcsFC.begin(TCS34725_ADDRESS, &hi2c1, tcsFC_addr) && tcsFR.begin(TCS34725_ADDRESS, &hi2c1, tcsFR_addr)) {
 	  debugStatus=0x55; //Found sensor
   } else {
 	  debugStatus=0xAA; //Sensor not found
@@ -199,7 +207,8 @@ int main(void)
   {
 
 	  uint16_t r1, g1, b1, c1, colorTempFL, luxFL;
-	  uint16_t r2, g2, b2, c2, colorTempFR, luxFR;
+	  uint16_t r2, g2, b2, c2, colorTempFC, luxFC;
+	  uint16_t r3, g3, b3, c3, colorTempFR, luxFR;
 
 	  //Green
 	  uint16_t GREEN_R = 50;
@@ -208,27 +217,41 @@ int main(void)
 
 
 	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
-	  getRawData_noDelay(&tcsFR, &r2, &g2, &b2, &c2);
+	  getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+	  getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
+
+	  /* New Format:
+	   * 	FL = 1
+	   * 	FC = 2
+	   * 	FR = 3
+	   */
+
 
 	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
 	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
+	  double colorReading3 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r3, &g3, &b3); //goes from 0 to 441.67
 
 
 	  colorTempFL = tcsFL.calculateColorTemperature(r1, g1, b1);
 
-	  colorTempFR = tcsFR.calculateColorTemperature(r2, g2, b2);
+	  colorTempFC = tcsFC.calculateColorTemperature(r2, g2, b2);
+
+	  colorTempFR = tcsFR.calculateColorTemperature(r3, g3, b3);
 
 	  luxFL = tcsFL.calculateLux(r1, g1, b1);
-	  luxFR = tcsFR.calculateLux(r2, g2, b2);
+	  luxFC = tcsFC.calculateLux(r2, g2, b2);
+	  luxFR = tcsFR.calculateLux(r3, g3, b3);
 
 	  char txtFL[80]={0};
+	  char txtFC[80]={0};
 	  char txtFR[80]={0};
 	  char buf[64];
 //	  sprintf(buf, "Value of counter: %d\r\n", a);
 
 
 	  snprintf(txtFL,80,"Color TempFL: %dK LUXFL: %d R: %d G: %d B: %d C: %d\n",colorTempFL,luxFL,r1,g1,b1,c1);
-	  snprintf(txtFR,80,"Color TempFR: %dK LUXFR: %d R: %d G: %d B: %d C: %d\n",colorTempFR,luxFR,r2,g2,b2,c2);
+	  snprintf(txtFC,80,"Color TempFR: %dK LUXFR: %d R: %d G: %d B: %d C: %d\n",colorTempFC,luxFC,r2,g2,b2,c2);
+	  snprintf(txtFR,80,"Color TempFR: %dK LUXFR: %d R: %d G: %d B: %d C: %d\n",colorTempFR,luxFR,r3,g3,b3,c3);
 
 
 
@@ -304,54 +327,54 @@ int main(void)
 
 	  //1 meter speed test ----------------------------- //
 
-	  if(r1 > 100 || r2 > 100) {
-//		uint32_t dutyCycle = 0.45*65535;
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
-//		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-		  HAL_Delay(3000);
-	  }
+//	  if(r1 > 100 || r2 > 100 || r3 > 100) {
+////		uint32_t dutyCycle = 0.45*65535;
+////		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, dutyCycle);
+////		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, dutyCycle);
+//		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+//		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+//		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+//		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//		  HAL_Delay(3000);
+//	  }
 
 
 
 
 
-//	//Condition for Using Claw --------------------------- //
+	//Condition for Using Claw --------------------------- //
+
+	//Servo info
+	/*
+	 *Position "0" (1.5 ms pulse) is the middle position. 7.5%
+	 *Position Position "90" (~2 ms pulse) is all the way to the right. 10%
+	 *Position Position "-90" (~1 ms pulse) is all the way to the left. 5%
+	 *
+	 */
+	if(r1 > 100 || r2 > 100 || r3 > 100) {
+		// Use Claw to grab LEGO figure
+
+		uint32_t pulseWidth = 0.10*65535;
+		// /0.05 * 65535?
+
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+
+		HAL_Delay(3000);
+//		//drive forward for 1s
+//		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
 //
-//	//Servo info
-//	/*
-//	 *Position "0" (1.5 ms pulse) is the middle position. 7.5%
-//	 *Position Position "90" (~2 ms pulse) is all the way to the right. 10%
-//	 *Position Position "-90" (~1 ms pulse) is all the way to the left. 5%
-//	 *
-//	 */
-//	if(r1 > 100 || r2 > 100) {
-//		// Use Claw to grab LEGO figure
-//
-//		uint32_t pulseWidth = 0.10*65535;
-//		// /0.05 * 65535?
-//
-//		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
-//
-//		HAL_Delay(3000);
-////		//drive forward for 1s
-////		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-////		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-////		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-////		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-////
-////		//Use Claw to release LEGO figure
-////		pulseWidth = 0.075*65535;
-////		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
-////		HAL_Delay(1000);
-//
-//		pulseWidth = 0.05*65535;
+//		//Use Claw to release LEGO figure
+//		pulseWidth = 0.075*65535;
 //		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
 //		HAL_Delay(1000);
-//	}
+
+		pulseWidth = 0.05*65535;
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+		HAL_Delay(1000);
+	}
 
 
 
