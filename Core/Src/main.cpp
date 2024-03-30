@@ -54,6 +54,18 @@ TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart2;
 
+//state variables
+uint8_t state = 0;
+uint8_t follow_state = 0;
+const uint8_t WAIT_FOR_START = 0;
+const uint8_t LINE_FOLLOW = 1;
+const uint8_t FOUND_BLUE = 2;
+const uint8_t FOUND_GREEN = 3;
+const uint8_t FOUND_END = 4;
+const uint8_t PIKCUP = 5;
+const uint8_t DROPOFF = 6;
+
+
 /* USER CODE BEGIN PV */
 
 uint8_t debugStatus=0;
@@ -151,6 +163,7 @@ int main(void)
 
 
   HAL_Delay(1000);
+  
   // Construction Check - Move Forward, Backwards, Turn
   //Left
   // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
@@ -203,6 +216,38 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
+  while (!(state)) 
+  {
+    //read on board button press !!!!! change the pin !!!!
+    if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_12) == 1)
+    {
+      state = 1;
+    }
+  }
+
+  //State machine
+  while (1)
+  {
+    switch (state)
+    {
+      case FOUND_BLUE:
+        GuhaLineup();
+      case FOUND_GREEN:
+        FindDropoffZone();
+      case FOUND_END:
+        break;
+      case DROPOFF:
+        ArmOpen(1);
+      case PIKCUP:
+        ArmClose();
+      //Default is line follow
+      default:
+        NadimRizz(follow_state);
+    }
+  }
+
   while (1)
   {
 
@@ -393,6 +438,97 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
+
+void NadimRizz(uint8_t follow_state)
+{
+  uint16_t* sensor_readings = LineFollow();
+  
+
+  switch(x)
+  {
+    case FOUND_BLUE:
+      //when green found ... 
+      follow_state = FOUND_GREEN;
+      state = FOUND_GREEN;
+    case FOUND_GREEN:
+      //when end/red found ... 
+      follow_state = FOUND_END;
+      state = FOUND_END;
+    //find the red line that marks the end of the track
+    case FOUND_END:
+      //when blue found ... 
+    default:
+      //when blue found ...
+      follow_state = FOUND_BLUE;
+      state = FOUND_BLUE;
+  }
+}
+
+uint16_t* LineFollow(void)
+{
+  //check sensors
+  static uint16_t sensor_reading[3];
+	for(uint16_t i = 0; i<3; i++)
+	{
+		sensor_reading[i] = getRawData_noDelay(*); //put in sensor readings, from left to right
+	}
+
+  //adjust motors
+
+  return(sensor_reading);
+}
+
+
+//Pre-pickup, aligns robot with the target
+void GuhaLineup(void)
+{
+  //front see blue, back see brown
+
+  //front see white, back see blue
+
+  //front red, back white
+
+  //then close
+
+  state = ARM_CLOSE;
+}
+
+//find the dropoff zone by looking for the green tape in the side sensors
+void FindDropoffZone(void)
+{
+  //slow speed, move until the two sensors sees the 
+}
+
+void ArmClose(void)
+{
+  //write to PWM for servo motor
+  uint32_t pulseWidth = 0.10*65535;
+  pulseWidth = 0.05*65535;
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+  HAL_Delay(1000);
+
+  state = LINE_FOLLOW;
+}
+
+void ArmOpen(uint8_t pace)
+{
+
+  for (uint8_t i = 0; i < ... , i++)
+  {
+    //write to PWM for servo motor
+    uint32_t pulseWidth = 0.10*65535;
+    pulseWidth = 0.05*65535;
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+    
+    if (pace)
+    {
+      //loop pulse width to move in increments of a few degrees, plus a pause in the middle to change the speed
+      HAL_Delay(10);
+    }
+  }
+  state = LINE_FOLLOW;
+}
+
 
 /**
   * @brief System Clock Configuration
