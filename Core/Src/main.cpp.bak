@@ -21,6 +21,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "Adafruit_TCS34725.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <cstring>
+#include <cmath>
+using namespace std;
 
 /* USER CODE END Includes */
 
@@ -49,6 +56,14 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
+uint8_t debugStatus=0;
+uint8_t state=1;
+
+//potential cause of slow response (motors) when detecting colour
+Adafruit_TCS34725 tcsFL = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcsFC = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcsFR = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,6 +75,28 @@ static void MX_I2C3_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
+
+void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
+
+int16_t euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *RGB1[3], uint16_t *RGB2[3]);
+
+// Movement Functions
+void moveForward(uint32_t *dutyCycle);
+
+void moveBackward(uint32_t *dutyCycle);
+
+void moveLeft(uint32_t *dutyCycle);
+
+void moveRight(uint32_t *dutyCycle);
+
+void stop();
+
+// Claw Functions
+void grab();
+
+void release();
+
+
 
 /* USER CODE END PFP */
 
@@ -103,17 +140,80 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+
+  uint8_t tcsFL_addr = 1;
+  uint8_t tcsFC_addr = 2;
+  uint8_t tcsFR_addr = 3;
+
+
+
+  if (tcsFL.begin(TCS34725_ADDRESS, &hi2c1, tcsFL_addr) && tcsFC.begin(TCS34725_ADDRESS, &hi2c1, tcsFC_addr) && tcsFR.begin(TCS34725_ADDRESS, &hi2c1, tcsFR_addr)) {
+	  debugStatus=0x55; //Found sensor
+  } else {
+	  debugStatus=0xAA; //Sensor not found
+	  while(1);
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+	  uint16_t r1, g1, b1, c1;
+	  uint16_t r2, g2, b2, c2;
+	  uint16_t r3, g3, b3, c3;
+
+
+	  const uint16_t REDLINE[3] = {139, 46, 75};
+	  const uint16_t GREENZONE[3] = {43, 88, 125};
+	  const uint16_t BULLSEYE_BLUE[3] = {31, 70, 164};
+	  const uint16_t WOOD[3] = {77, 83, 88};
+
+
+    // Get RGB Values
+	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
+	  getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+	  getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
+
+	  /* New Format:
+	   * 	FL = 1
+	   * 	FC = 2
+	   * 	FR = 3
+	   */
+//
+//	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
+//	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
+//	  double colorReading3 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r3, &g3, &b3); //goes from 0 to 441.67
+
+	  // Testing movement
+    uint32_t dutyCycle = 0.32*65535;
+
+    moveForward(&dutyCycle);
+    HAL_Delay(1000);
+    stop();
+
+    moveLeft(&dutyCycle);
+    HAL_Delay(1000);
+    stop();
+
+    moveRight(&dutyCycle);
+    HAL_Delay(1000);
+    stop();
+
+    moveBackward(&dutyCycle);
+    HAL_Delay(1000);
+    stop();
+
+    // Test Claw
+    grab();
+
+    release();
   }
-  /* USER CODE END 3 */
 }
 
 /**
@@ -251,7 +351,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4200;
+  htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
@@ -325,6 +425,7 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
@@ -419,6 +520,101 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/* tcs.getRawData() does a delay(Integration_Time) after the sensor readout.
+We don't need to wait for the next integration cycle because we receive an interrupt when the integration cycle is complete*/
+void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c)
+{
+  *c = tcs->read16(TCS34725_CDATAL);
+  *r = tcs->read16(TCS34725_RDATAL);
+  *g = tcs->read16(TCS34725_GDATAL);
+  *b = tcs->read16(TCS34725_BDATAL);
+
+  HAL_Delay(1);
+
+  uint32_t sum = *c;
+
+    // Avoid divide by zero errors ... if clear = 0 return black
+    if (c == 0) {
+      *r = *g = *b = 0;
+      return;
+    }
+
+    *r = (float)*r / sum * 255.0;
+    *g = (float)*g / sum * 255.0;
+    *b = (float)*b / sum * 255.0;
+}
+
+int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *RGB1[3], uint16_t *RGB2[3]) {
+	int16_t deltaR1 = *r - *RGB1[0];
+	int16_t deltaG1 = *g - *RGB1[1];
+	int16_t deltaB1 = *b - *RGB1[2];
+    int16_t deltaR2 = *r - *RGB2[0];
+	int16_t deltaG2 = *g - *RGB2[1];
+	int16_t deltaB2 = *b - *RGB2[2];
+
+    double distance1 = sqrt(pow(deltaR1, 2)+ pow(deltaG1, 2) + pow(deltaB1, 2));
+    double distance2 = sqrt(pow(deltaR2, 2)+ pow(deltaG2, 2) + pow(deltaB2, 2));
+
+    double totalDistance = distance1+distance2;
+
+    return ((distance1/totalDistance)*100);
+}
+
+// Movement Functions
+void moveForward(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+}
+
+void moveBackward(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+}
+
+void moveLeft(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+}
+
+void moveRight(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+}
+
+void stop(){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+}
+
+// Claw Functions
+void grab(){
+  uint32_t pulseWidth = 0.10*65535;
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+}
+
+void release(){
+  uint32_t pulseWidth = 0.05*65535;
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+}
 
 /* USER CODE END 4 */
 

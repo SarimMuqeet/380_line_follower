@@ -22,6 +22,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "Adafruit_TCS34725.h"
+#include "helpers.h"
+#include "statemachine.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -64,6 +67,10 @@ Adafruit_TCS34725 tcsFL = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS3
 Adafruit_TCS34725 tcsFC = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 Adafruit_TCS34725 tcsFR = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 
+state_c currState = IDLE;
+uint32_t dutyCycle = (uint32_t)(COUNTER_PERIOD*DEFAULT_MOTOR);
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,26 +82,6 @@ static void MX_I2C3_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-
-void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
-
-int16_t euclideanDistance(uint16_t *r1, uint16_t *g1, uint16_t *b1, uint16_t *RGB1[3], uint16_t *RGB2[3]);
-
-// Movement Functions
-void moveForward(uint32_t *dutyCycle);
-
-void moveBackward(uint32_t *dutyCycle);
-
-void moveLeft(uint32_t *dutyCycle);
-
-void moveRight(uint32_t *dutyCycle);
-
-void stop();
-
-// Claw Functions
-void grab();
-
-void release();
 
 
 
@@ -163,56 +150,56 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	  uint16_t r1, g1, b1, c1;
-	  uint16_t r2, g2, b2, c2;
-	  uint16_t r3, g3, b3, c3;
-
-
-	  const uint16_t REDLINE[3] = {139, 46, 75};
-	  const uint16_t GREENZONE[3] = {43, 88, 125};
-	  const uint16_t BULLSEYE_BLUE[3] = {31, 70, 164};
-	  const uint16_t WOOD[3] = {77, 83, 88};
-
-
-    // Get RGB Values
-	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
-	  getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
-	  getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
-
-	  /* New Format:
-	   * 	FL = 1
-	   * 	FC = 2
-	   * 	FR = 3
-	   */
+	  runStateMachine();
+//	  uint16_t r1, g1, b1, c1;
+//	  uint16_t r2, g2, b2, c2;
+//	  uint16_t r3, g3, b3, c3;
 //
-//	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
-//	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
-//	  double colorReading3 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r3, &g3, &b3); //goes from 0 to 441.67
-
-	  // Testing movement
-    uint32_t dutyCycle = 0.32*65535;
-
-    moveForward(&dutyCycle);
-    HAL_Delay(1000);
-    stop();
-
-    moveLeft(&dutyCycle);
-    HAL_Delay(1000);
-    stop();
-
-    moveRight(&dutyCycle);
-    HAL_Delay(1000);
-    stop();
-
-    moveBackward(&dutyCycle);
-    HAL_Delay(1000);
-    stop();
-
-    // Test Claw
-    grab();
-
-    release();
+//
+//	  const uint16_t REDLINE[3] = {139, 46, 75};
+//	  const uint16_t GREENZONE[3] = {43, 88, 125};
+//	  const uint16_t BULLSEYE_BLUE[3] = {31, 70, 164};
+//	  const uint16_t WOOD[3] = {77, 83, 88};
+//
+//
+//    // Get RGB Values
+//	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
+//	  getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+//	  getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
+//
+//	  /* New Format:
+//	   * 	FL = 1
+//	   * 	FC = 2
+//	   * 	FR = 3
+//	   */
+////
+////	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
+////	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
+////	  double colorReading3 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r3, &g3, &b3); //goes from 0 to 441.67
+//
+//	  // Testing movement
+//    uint32_t dutyCycle = 0.32*65535;
+//
+//    moveForward(&dutyCycle);
+//    HAL_Delay(1000);
+//    stop();
+//
+//    moveLeft(&dutyCycle);
+//    HAL_Delay(1000);
+//    stop();
+//
+//    moveRight(&dutyCycle);
+//    HAL_Delay(1000);
+//    stop();
+//
+//    moveBackward(&dutyCycle);
+//    HAL_Delay(1000);
+//    stop();
+//
+//    // Test Claw
+//    grab();
+//
+//    release();
   }
 }
 
@@ -615,6 +602,104 @@ void release(){
   uint32_t pulseWidth = 0.05*65535;
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
 }
+
+
+//stateMachine
+void runStateMachine(){
+	switch(currState) {
+
+	case IDLE:
+		idle();
+		break;
+
+	case SEARCH_LEGO:
+		search_lego();
+		break;
+
+	case SECURE_LEGO:
+		stop();
+		grab();
+		currState = SEARCH_SAFE;
+		break;
+
+	case SEARCH_SAFE:
+		search_safe();
+		break;
+
+	case DROPOFF_LEGO:
+		stop();
+		release();
+		currState = RETURN_TO_START;
+		break;
+
+	case RETURN_TO_START:
+		line_follow_bw();
+		break;
+
+	}
+
+
+}
+
+void idle() {
+	int state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+	if(state == 1) {
+		currState = SEARCH_LEGO;
+	}
+}
+
+void search_lego() {
+	line_follow_fw();
+
+	//detect blue, check bullseye
+	if(b3 > 150) {
+		currState = SECURE_LEGO;
+	}
+}
+
+void search_safe() {
+	line_follow_bw();
+
+	//detect green
+	if(g1 > 100 || g2 > 100){
+		currState = DROPOFF_LEGO;
+	}
+}
+
+void line_follow_fw() {
+	moveForward(&dutyCycle);
+
+	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
+	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
+
+	//TODO: PID, euclidean distance
+	if(r1 > 120){
+		//only until FC sees red again
+		//vary DC based on PID
+		moveRight(&dutyCycle);
+	} else if(r2 > 120) {
+		moveLeft(&dutyCycle);
+	}
+}
+
+void line_follow_bw() {
+	moveBackward(&dutyCycle);
+
+	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
+	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
+
+	//TODO: PID, euclidean distance
+	if(r1 > 120){
+		//opposite of fw
+		moveLeft(&dutyCycle);
+	} else if(r2 > 120) {
+		moveRight(&dutyCycle);
+	}
+}
+
+
 
 /* USER CODE END 4 */
 
