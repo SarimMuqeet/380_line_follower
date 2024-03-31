@@ -63,9 +63,9 @@ uint8_t debugStatus=0;
 uint8_t state=1;
 
 //potential cause of slow response (motors) when detecting colour
-Adafruit_TCS34725 tcsFL = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
-Adafruit_TCS34725 tcsFC = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
-Adafruit_TCS34725 tcsFR = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcsFL = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcsFC = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcsFR = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
 
 state_c currState = IDLE;
 uint32_t dutyCycle = (uint32_t)(COUNTER_PERIOD*DEFAULT_MOTOR);
@@ -131,11 +131,9 @@ int main(void)
 
   uint8_t tcsFL_addr = 1;
   uint8_t tcsFC_addr = 2;
-  uint8_t tcsFR_addr = 3;
+  uint8_t tcsFR_addr = 2;
 
-
-
-  if (tcsFL.begin(TCS34725_ADDRESS, &hi2c1, tcsFL_addr) && tcsFC.begin(TCS34725_ADDRESS, &hi2c1, tcsFC_addr) && tcsFR.begin(TCS34725_ADDRESS, &hi2c1, tcsFR_addr)) {
+  if (tcsFL.begin(TCS34725_ADDRESS, &hi2c1, tcsFL_addr) && tcsFC.begin(TCS34725_ADDRESS, &hi2c3) && tcsFR.begin(TCS34725_ADDRESS, &hi2c1, tcsFR_addr)) {
 	  debugStatus=0x55; //Found sensor
   } else {
 	  debugStatus=0xAA; //Sensor not found
@@ -552,7 +550,7 @@ void moveForward(uint32_t *dutyCycle){
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
   __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
 }
 
@@ -561,7 +559,7 @@ void moveBackward(uint32_t *dutyCycle){
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
   __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
 }
 
@@ -570,7 +568,7 @@ void moveLeft(uint32_t *dutyCycle){
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
   __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
 }
 
@@ -656,15 +654,18 @@ void search_lego() {
 	}
 }
 
+
 void search_safe() {
 	line_follow_bw();
 
 	//detect green
-	if(g1 > 100 || g2 > 100){
+	if(g1 > 130 || g2 > 130){
 		currState = DROPOFF_LEGO;
 	}
 }
 
+
+//verified
 void line_follow_fw() {
 	moveForward(&dutyCycle);
 

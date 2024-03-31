@@ -2,7 +2,8 @@
 #define __HELPERS_H_
 
 #define COUNTER_PERIOD 65535
-#define DEFAULT_MOTOR 0.32
+#define DEFAULT_MOTOR 0.65
+
 
 uint16_t r1, g1, b1, c1;
 uint16_t r2, g2, b2, c2;
