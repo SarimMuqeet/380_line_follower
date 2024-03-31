@@ -27,23 +27,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  000402d4  2**0
                   CONTENTS, READONLY
- 12 .debug_info   000157ca  00000000  00000000  00040304  2**0
+ 12 .debug_info   000157c9  00000000  00000000  00040304  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 000025d1  00000000  00000000  00055ace  2**0
+ 13 .debug_abbrev 000025e7  00000000  00000000  00055acd  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00001068  00000000  00000000  000580a0  2**3
+ 14 .debug_aranges 00001068  00000000  00000000  000580b8  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_ranges 00000fb8  00000000  00000000  00059108  2**3
+ 15 .debug_ranges 00000fb8  00000000  00000000  00059120  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0001b994  00000000  00000000  0005a0c0  2**0
+ 16 .debug_macro  0001b988  00000000  00000000  0005a0d8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   000133ac  00000000  00000000  00075a54  2**0
+ 17 .debug_line   000133ac  00000000  00000000  00075a60  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00097db0  00000000  00000000  00088e00  2**0
+ 18 .debug_str    00097d8a  00000000  00000000  00088e0c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  00120bb0  2**0
+ 19 .comment      00000050  00000000  00000000  00120b96  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00019f5c  00000000  00000000  00120c00  2**2
+ 20 .debug_frame  00019f5c  00000000  00000000  00120be8  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -2818,84 +2818,85 @@ static void MX_GPIO_Init(void)
  80018a2:	4823      	ldr	r0, [pc, #140]	; (8001930 <_ZL12MX_GPIO_Initv+0x130>)
  80018a4:	f001 f95c 	bl	8002b60 <HAL_GPIO_WritePin>
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13; //B1_Pin
  80018a8:	f44f 5300 	mov.w	r3, #8192	; 0x2000
  80018ac:	617b      	str	r3, [r7, #20]
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
- 80018ae:	f44f 1304 	mov.w	r3, #2162688	; 0x210000
- 80018b2:	61bb      	str	r3, [r7, #24]
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+ 80018ae:	2300      	movs	r3, #0
+ 80018b0:	61bb      	str	r3, [r7, #24]
   GPIO_InitStruct.Pull = GPIO_NOPULL;
- 80018b4:	2300      	movs	r3, #0
- 80018b6:	61fb      	str	r3, [r7, #28]
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
- 80018b8:	f107 0314 	add.w	r3, r7, #20
- 80018bc:	4619      	mov	r1, r3
- 80018be:	481c      	ldr	r0, [pc, #112]	; (8001930 <_ZL12MX_GPIO_Initv+0x130>)
- 80018c0:	f000 ffb2 	bl	8002828 <HAL_GPIO_Init>
+ 80018b2:	2300      	movs	r3, #0
+ 80018b4:	61fb      	str	r3, [r7, #28]
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+ 80018b6:	f107 0314 	add.w	r3, r7, #20
+ 80018ba:	4619      	mov	r1, r3
+ 80018bc:	481c      	ldr	r0, [pc, #112]	; (8001930 <_ZL12MX_GPIO_Initv+0x130>)
+ 80018be:	f000 ffb3 	bl	8002828 <HAL_GPIO_Init>
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
- 80018c4:	2320      	movs	r3, #32
- 80018c6:	617b      	str	r3, [r7, #20]
+ 80018c2:	2320      	movs	r3, #32
+ 80018c4:	617b      	str	r3, [r7, #20]
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
- 80018c8:	2301      	movs	r3, #1
- 80018ca:	61bb      	str	r3, [r7, #24]
+ 80018c6:	2301      	movs	r3, #1
+ 80018c8:	61bb      	str	r3, [r7, #24]
   GPIO_InitStruct.Pull = GPIO_NOPULL;
- 80018cc:	2300      	movs	r3, #0
- 80018ce:	61fb      	str	r3, [r7, #28]
+ 80018ca:	2300      	movs	r3, #0
+ 80018cc:	61fb      	str	r3, [r7, #28]
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
- 80018d0:	2300      	movs	r3, #0
- 80018d2:	623b      	str	r3, [r7, #32]
+ 80018ce:	2300      	movs	r3, #0
+ 80018d0:	623b      	str	r3, [r7, #32]
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
- 80018d4:	f107 0314 	add.w	r3, r7, #20
- 80018d8:	4619      	mov	r1, r3
- 80018da:	4813      	ldr	r0, [pc, #76]	; (8001928 <_ZL12MX_GPIO_Initv+0x128>)
- 80018dc:	f000 ffa4 	bl	8002828 <HAL_GPIO_Init>
+ 80018d2:	f107 0314 	add.w	r3, r7, #20
+ 80018d6:	4619      	mov	r1, r3
+ 80018d8:	4813      	ldr	r0, [pc, #76]	; (8001928 <_ZL12MX_GPIO_Initv+0x128>)
+ 80018da:	f000 ffa5 	bl	8002828 <HAL_GPIO_Init>
 
   /*Configure GPIO pins : PB13 PB14 */
   GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14;
- 80018e0:	f44f 43c0 	mov.w	r3, #24576	; 0x6000
- 80018e4:	617b      	str	r3, [r7, #20]
+ 80018de:	f44f 43c0 	mov.w	r3, #24576	; 0x6000
+ 80018e2:	617b      	str	r3, [r7, #20]
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
- 80018e6:	2301      	movs	r3, #1
- 80018e8:	61bb      	str	r3, [r7, #24]
+ 80018e4:	2301      	movs	r3, #1
+ 80018e6:	61bb      	str	r3, [r7, #24]
   GPIO_InitStruct.Pull = GPIO_NOPULL;
- 80018ea:	2300      	movs	r3, #0
- 80018ec:	61fb      	str	r3, [r7, #28]
+ 80018e8:	2300      	movs	r3, #0
+ 80018ea:	61fb      	str	r3, [r7, #28]
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
- 80018ee:	2300      	movs	r3, #0
- 80018f0:	623b      	str	r3, [r7, #32]
+ 80018ec:	2300      	movs	r3, #0
+ 80018ee:	623b      	str	r3, [r7, #32]
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
- 80018f2:	f107 0314 	add.w	r3, r7, #20
- 80018f6:	4619      	mov	r1, r3
- 80018f8:	480c      	ldr	r0, [pc, #48]	; (800192c <_ZL12MX_GPIO_Initv+0x12c>)
- 80018fa:	f000 ff95 	bl	8002828 <HAL_GPIO_Init>
+ 80018f0:	f107 0314 	add.w	r3, r7, #20
+ 80018f4:	4619      	mov	r1, r3
+ 80018f6:	480d      	ldr	r0, [pc, #52]	; (800192c <_ZL12MX_GPIO_Initv+0x12c>)
+ 80018f8:	f000 ff96 	bl	8002828 <HAL_GPIO_Init>
 
   /*Configure GPIO pins : PC10 PC12 */
   GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_12;
- 80018fe:	f44f 53a0 	mov.w	r3, #5120	; 0x1400
- 8001902:	617b      	str	r3, [r7, #20]
+ 80018fc:	f44f 53a0 	mov.w	r3, #5120	; 0x1400
+ 8001900:	617b      	str	r3, [r7, #20]
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
- 8001904:	2301      	movs	r3, #1
- 8001906:	61bb      	str	r3, [r7, #24]
+ 8001902:	2301      	movs	r3, #1
+ 8001904:	61bb      	str	r3, [r7, #24]
   GPIO_InitStruct.Pull = GPIO_NOPULL;
- 8001908:	2300      	movs	r3, #0
- 800190a:	61fb      	str	r3, [r7, #28]
+ 8001906:	2300      	movs	r3, #0
+ 8001908:	61fb      	str	r3, [r7, #28]
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
- 800190c:	2300      	movs	r3, #0
- 800190e:	623b      	str	r3, [r7, #32]
+ 800190a:	2300      	movs	r3, #0
+ 800190c:	623b      	str	r3, [r7, #32]
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
- 8001910:	f107 0314 	add.w	r3, r7, #20
- 8001914:	4619      	mov	r1, r3
- 8001916:	4806      	ldr	r0, [pc, #24]	; (8001930 <_ZL12MX_GPIO_Initv+0x130>)
- 8001918:	f000 ff86 	bl	8002828 <HAL_GPIO_Init>
+ 800190e:	f107 0314 	add.w	r3, r7, #20
+ 8001912:	4619      	mov	r1, r3
+ 8001914:	4806      	ldr	r0, [pc, #24]	; (8001930 <_ZL12MX_GPIO_Initv+0x130>)
+ 8001916:	f000 ff87 	bl	8002828 <HAL_GPIO_Init>
 
 }
- 800191c:	bf00      	nop
- 800191e:	3728      	adds	r7, #40	; 0x28
- 8001920:	46bd      	mov	sp, r7
- 8001922:	bd80      	pop	{r7, pc}
+ 800191a:	bf00      	nop
+ 800191c:	3728      	adds	r7, #40	; 0x28
+ 800191e:	46bd      	mov	sp, r7
+ 8001920:	bd80      	pop	{r7, pc}
+ 8001922:	bf00      	nop
  8001924:	40023800 	.word	0x40023800
  8001928:	40020000 	.word	0x40020000
  800192c:	40020400 	.word	0x40020400
@@ -3418,9 +3419,10 @@ void idle() {
  8001d00:	f000 ff16 	bl	8002b30 <HAL_GPIO_ReadPin>
  8001d04:	4603      	mov	r3, r0
  8001d06:	607b      	str	r3, [r7, #4]
-	if(state == 1) {
+	//button is active low apparently
+	if(state == GPIO_PIN_RESET) {
  8001d08:	687b      	ldr	r3, [r7, #4]
- 8001d0a:	2b01      	cmp	r3, #1
+ 8001d0a:	2b00      	cmp	r3, #0
  8001d0c:	d102      	bne.n	8001d14 <_Z4idlev+0x20>
 		currState = SEARCH_LEGO;
  8001d0e:	4b04      	ldr	r3, [pc, #16]	; (8001d20 <_Z4idlev+0x2c>)
