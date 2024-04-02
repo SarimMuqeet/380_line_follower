@@ -30,7 +30,10 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <chrono>
+
 using namespace std;
+using namespace std::chrono;
 
 /* USER CODE END Includes */
 
@@ -70,6 +73,8 @@ Adafruit_TCS34725 tcsFR = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS3
 state_c currState = IDLE;
 uint32_t dutyCycle = (uint32_t)(COUNTER_PERIOD*DEFAULT_MOTOR);
 
+//PD Global vars
+double prev_error = 0;
 
 /* USER CODE END PV */
 
@@ -144,6 +149,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  
+  auto start = high_resolution_clock::now();
+
   while (1)
   {
 	  runStateMachine();
@@ -668,15 +676,15 @@ void search_safe() {
 
 //verified
 void line_follow_fw() {
-	moveForward(&dutyCycle);
+	
 
 	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
 	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
-  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, &REDLINE, &WOOD)
-  int16_t dist2 = euclideanDistance(&r2, &g2, &b2, &REDLINE, &WOOD)
-  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, &REDLINE, &WOOD)
+  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, &REDLINE, &WOOD);
+  int16_t dist2 = euclideanDistance(&r2, &g2, &b2, &REDLINE, &WOOD);
+  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, &REDLINE, &WOOD);
 
 	//TODO: PID, euclidean distance
 	if(dist1 > 80){
@@ -685,7 +693,48 @@ void line_follow_fw() {
 		moveRight(&dutyCycle);
 	} else if(dist3 > 80) {
 		moveLeft(&dutyCycle);
-	}
+	} else{
+    moveForward(&dutyCycle);
+  }
+}
+
+
+// Line follow PD test
+void line_follow_fw_pd() {
+	double Kp = 0.1;
+  double Kd = 0.01;
+  
+	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
+	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
+
+  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, &REDLINE, &WOOD);
+  //int16_t dist2 = euclideanDistance(&r2, &g2, &b2, &WOOD, &REDLINE)
+  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, &REDLINE, &WOOD);
+
+  double error = 0 - dist3 + dist1;
+
+  auto end = high_resolution_clock::now();
+
+  double P = error * Kp;
+  double D = Kd*(error - prev_error)/(end - start);
+
+  double control = P + D;
+
+  double dutyL = dutyCycle + control;
+  double dutyR = dutyCycle - control;
+
+	if(dist1 > 80){
+		moveRight(&dutyR);
+	} else if(dist3 > 80) {
+		moveLeft(&dutyL);
+	} else{
+    moveForward(&dutyCycle);
+  }
+    
+  auto start = high_resolution_clock::now();
+  prev_error = error;
+
 }
 
 void line_follow_bw() {
