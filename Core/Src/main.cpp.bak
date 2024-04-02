@@ -21,6 +21,16 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "Adafruit_TCS34725.h"
+#include "helpers.h"
+#include "statemachine.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <cstring>
+#include <cmath>
+using namespace std;
 
 /* USER CODE END Includes */
 
@@ -48,6 +58,18 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+
+uint8_t debugStatus=0;
+uint8_t state=1;
+
+//potential cause of slow response (motors) when detecting colour
+Adafruit_TCS34725 tcsFL = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcsFC = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcsFR = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+
+state_c currState = IDLE;
+uint32_t dutyCycle = (uint32_t)(COUNTER_PERIOD*DEFAULT_MOTOR);
+
 
 /* USER CODE END PV */
 
@@ -103,17 +125,80 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+
+  uint8_t tcsFL_addr = 1;
+  uint8_t tcsFC_addr = 2;
+  uint8_t tcsFR_addr = 3;
+
+
+
+  if (tcsFL.begin(TCS34725_ADDRESS, &hi2c1, tcsFL_addr) && tcsFC.begin(TCS34725_ADDRESS, &hi2c1, tcsFC_addr) && tcsFR.begin(TCS34725_ADDRESS, &hi2c1, tcsFR_addr)) {
+	  debugStatus=0x55; //Found sensor
+  } else {
+	  debugStatus=0xAA; //Sensor not found
+	  while(1);
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+	  runStateMachine();
+//	  uint16_t r1, g1, b1, c1;
+//	  uint16_t r2, g2, b2, c2;
+//	  uint16_t r3, g3, b3, c3;
+//
+//
+//	  const uint16_t REDLINE[3] = {139, 46, 75};
+//	  const uint16_t GREENZONE[3] = {43, 88, 125};
+//	  const uint16_t BULLSEYE_BLUE[3] = {31, 70, 164};
+//	  const uint16_t WOOD[3] = {77, 83, 88};
+//
+//
+//    // Get RGB Values
+//	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
+//	  getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+//	  getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
+//
+//	  /* New Format:
+//	   * 	FL = 1
+//	   * 	FC = 2
+//	   * 	FR = 3
+//	   */
+////
+////	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
+////	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
+////	  double colorReading3 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r3, &g3, &b3); //goes from 0 to 441.67
+//
+//	  // Testing movement
+//    uint32_t dutyCycle = 0.32*65535;
+//
+//    moveForward(&dutyCycle);
+//    HAL_Delay(1000);
+//    stop();
+//
+//    moveLeft(&dutyCycle);
+//    HAL_Delay(1000);
+//    stop();
+//
+//    moveRight(&dutyCycle);
+//    HAL_Delay(1000);
+//    stop();
+//
+//    moveBackward(&dutyCycle);
+//    HAL_Delay(1000);
+//    stop();
+//
+//    // Test Claw
+//    grab();
+//
+//    release();
   }
-  /* USER CODE END 3 */
 }
 
 /**
@@ -251,7 +336,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4200;
+  htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
@@ -325,6 +410,7 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
@@ -389,11 +475,11 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10|GPIO_PIN_12, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13; //B1_Pin
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
