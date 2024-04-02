@@ -528,11 +528,12 @@ void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16
     *b = (float)*b / sum * 255.0;
 }
 
+// If sensor reading is identical to RGB1 output is 100
 int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *RGB1[3], uint16_t *RGB2[3]) {
 	int16_t deltaR1 = *r - *RGB1[0];
 	int16_t deltaG1 = *g - *RGB1[1];
 	int16_t deltaB1 = *b - *RGB1[2];
-    int16_t deltaR2 = *r - *RGB2[0];
+  int16_t deltaR2 = *r - *RGB2[0];
 	int16_t deltaG2 = *g - *RGB2[1];
 	int16_t deltaB2 = *b - *RGB2[2];
 
@@ -541,7 +542,7 @@ int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *RGB1[
 
     double totalDistance = distance1+distance2;
 
-    return ((distance1/totalDistance)*100);
+    return ((distance2/totalDistance)*100);
 }
 
 // Movement Functions
@@ -673,12 +674,16 @@ void line_follow_fw() {
 	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
+  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, &REDLINE, &WOOD)
+  int16_t dist2 = euclideanDistance(&r2, &g2, &b2, &REDLINE, &WOOD)
+  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, &REDLINE, &WOOD)
+
 	//TODO: PID, euclidean distance
-	if(r1 > 120){
+	if(dist1 > 80){
 		//only until FC sees red again
 		//vary DC based on PID
 		moveRight(&dutyCycle);
-	} else if(r2 > 120) {
+	} else if(dist3 > 80) {
 		moveLeft(&dutyCycle);
 	}
 }
