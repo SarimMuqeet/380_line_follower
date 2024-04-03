@@ -2,7 +2,11 @@
 #define __HELPERS_H_
 
 #define COUNTER_PERIOD 65535
-#define DEFAULT_MOTOR 0.65
+#define RIGHT_FW 0.73 //try 0.67 //really the right wheel
+#define LEFT_FW 0.67   //try 0.67
+
+#define LEFT_BW 0.73 //try 0.67
+#define RIGHT_BW 0.73   //try 0.67
 
 
 uint16_t r1, g1, b1, c1;
@@ -20,9 +24,9 @@ void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16
 
 int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *RGB1[3], uint16_t *RGB2[3]);
 // Movement Functions
-void moveForward(uint32_t *dutyCycle);
+void moveForward(uint32_t *dutyCycleL, uint32_t *dutyCycleR);
 
-void moveBackward(uint32_t *dutyCycle);
+void moveBackward(uint32_t *dutyCycleL, uint32_t *dutyCycleR);
 
 void moveLeft(uint32_t *dutyCycle);
 
@@ -34,6 +38,8 @@ void stop();
 void grab();
 
 void release();
+
+void print(char *str);
 
 #endif
 

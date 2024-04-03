@@ -30,10 +30,10 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
-#include <chrono>
+//#include <chrono>
 
 using namespace std;
-using namespace std::chrono;
+//using namespace std::chrono;
 
 /* USER CODE END Includes */
 
@@ -71,10 +71,17 @@ Adafruit_TCS34725 tcsFC = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS3
 Adafruit_TCS34725 tcsFR = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
 
 state_c currState = IDLE;
-uint32_t dutyCycle = (uint32_t)(COUNTER_PERIOD*DEFAULT_MOTOR);
+uint32_t leftFW = (uint32_t)(COUNTER_PERIOD*LEFT_FW);
+uint32_t rightFW = (uint32_t)(COUNTER_PERIOD*RIGHT_FW);
+uint32_t leftBW = (uint32_t)(COUNTER_PERIOD*LEFT_BW);
+uint32_t rightBW = (uint32_t)(COUNTER_PERIOD*RIGHT_BW);
+
+uint32_t leftTurn = (uint32_t)(COUNTER_PERIOD*LEFT_FW);
+uint32_t rightTurn = (uint32_t)(COUNTER_PERIOD*RIGHT_FW);
+
 
 //PD Global vars
-double prev_error = 0;
+//double prev_error = 0;
 
 /* USER CODE END PV */
 
@@ -150,11 +157,31 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   
-  auto start = high_resolution_clock::now();
+//  auto start = high_resolution_clock::now();
+
+  moveForward(&leftFW, &rightFW);
+  HAL_Delay(2000);
+
+  moveLeft(&leftTurn);
+  HAL_Delay(2000);
+
+  moveBackward(&leftBW, &rightBW);
+  HAL_Delay(2000);
+
+  moveRight(&rightTurn);
+  HAL_Delay(2000);
+
+  stop();
+
+//  release();
+//  grab();
+
 
   while (1)
   {
-	  runStateMachine();
+
+//	  runStateMachine();
+
 //	  uint16_t r1, g1, b1, c1;
 //	  uint16_t r2, g2, b2, c2;
 //	  uint16_t r3, g3, b3, c3;
@@ -537,13 +564,13 @@ void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16
 }
 
 // If sensor reading is identical to RGB1 output is 100
-int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *RGB1[3], uint16_t *RGB2[3]) {
-	int16_t deltaR1 = *r - *RGB1[0];
-	int16_t deltaG1 = *g - *RGB1[1];
-	int16_t deltaB1 = *b - *RGB1[2];
-  int16_t deltaR2 = *r - *RGB2[0];
-	int16_t deltaG2 = *g - *RGB2[1];
-	int16_t deltaB2 = *b - *RGB2[2];
+int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, const uint16_t RGB1[3], const uint16_t RGB2[3]) {
+	int16_t deltaR1 = *r - RGB1[0];
+	int16_t deltaG1 = *g - RGB1[1];
+	int16_t deltaB1 = *b - RGB1[2];
+	int16_t deltaR2 = *r - RGB2[0];
+	int16_t deltaG2 = *g - RGB2[1];
+	int16_t deltaB2 = *b - RGB2[2];
 
     double distance1 = sqrt(pow(deltaR1, 2)+ pow(deltaG1, 2) + pow(deltaB1, 2));
     double distance2 = sqrt(pow(deltaR2, 2)+ pow(deltaG2, 2) + pow(deltaB2, 2));
@@ -554,40 +581,56 @@ int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *RGB1[
 }
 
 // Movement Functions
-void moveForward(uint32_t *dutyCycle){
+void moveForward(uint32_t *dutyCycleL, uint32_t *dutyCycleR){
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycleL);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycleR);
 }
 
-void moveBackward(uint32_t *dutyCycle){
+void moveBackward(uint32_t *dutyCycleL, uint32_t *dutyCycleR){
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycleL);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycleR);
 }
 
 void moveLeft(uint32_t *dutyCycle){
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, &0);
+
+//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+
+
 }
 
 void moveRight(uint32_t *dutyCycle){
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+
+//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
 }
 
 void stop(){
@@ -599,13 +642,17 @@ void stop(){
 
 // Claw Functions
 void grab(){
-  uint32_t pulseWidth = 0.10*65535;
+  uint32_t pulseWidth = 0.075*65535;
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+  HAL_Delay(500);
+
+
 }
 
 void release(){
   uint32_t pulseWidth = 0.05*65535;
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
+  HAL_Delay(1000);
 }
 
 
@@ -618,6 +665,7 @@ void runStateMachine(){
 		break;
 
 	case SEARCH_LEGO:
+//		moveForward(&dutyCycleL, &dutyCycleR);
 		search_lego();
 		break;
 
@@ -638,7 +686,7 @@ void runStateMachine(){
 		break;
 
 	case RETURN_TO_START:
-		line_follow_bw();
+		return_to_start();
 		break;
 
 	}
@@ -650,6 +698,8 @@ void idle() {
 	int state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
 	//button is active low apparently
 	if(state == GPIO_PIN_RESET) {
+//		grab();
+		release();
 		currState = SEARCH_LEGO;
 	}
 }
@@ -657,20 +707,50 @@ void idle() {
 void search_lego() {
 	line_follow_fw();
 
+	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, BULLSEYE_BLUE, REDLINE);
+
 	//detect blue, check bullseye
-	if(b3 > 150) {
+	if(dist2 > 75) {
 		currState = SECURE_LEGO;
 	}
+
+    char str[64] = {0};
+    sprintf(str, "Blue dist2 %d\n", dist2);
+    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 }
 
 
 void search_safe() {
+//	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 0);
+
+//	char str[64] = {0};
+//	sprintf(str, "SEARCH SAFE\n");
+//	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
+
 	line_follow_bw();
 
 	//detect green
-	if(g1 > 130 || g2 > 130){
+	int16_t dist1 = euclideanDistance(&r2, &g2, &b2, GREENZONE, REDLINE);
+	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, GREENZONE, REDLINE);
+
+	//detect green, check for safe zone
+	if(dist1 > 75 || dist3 > 75) {
 		currState = DROPOFF_LEGO;
 	}
+}
+
+void return_to_start() {
+	line_follow_bw();
+
+	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE, WOOD);
+	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE, WOOD);
+	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE, WOOD);
+
+	if((dist1 > 70) && (dist2 > 70) && (dist3 > 70)){
+		stop();
+		currState = IDLE;
+	}
+
 }
 
 
@@ -682,76 +762,94 @@ void line_follow_fw() {
 	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
-  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, &REDLINE, &WOOD);
-  int16_t dist2 = euclideanDistance(&r2, &g2, &b2, &REDLINE, &WOOD);
-  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, &REDLINE, &WOOD);
+  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE, WOOD);
+//  int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE, WOOD);
+  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE, WOOD);
 
 	//TODO: PID, euclidean distance
-	if(dist1 > 80){
+	if(dist1 > 70){
 		//only until FC sees red again
 		//vary DC based on PID
-		moveRight(&dutyCycle);
-	} else if(dist3 > 80) {
-		moveLeft(&dutyCycle);
+		moveLeft(&leftTurn);
+//		HAL_Delay(10);
+//		stop();
+	} else if(dist3 > 70) {
+		moveRight(&rightTurn);
+//		HAL_Delay(10);
+//		stop();
 	} else{
-    moveForward(&dutyCycle);
-  }
-}
+//		stop();
+		moveForward(&leftFW, &rightFW);
+//		HAL_Delay(1000);
+//		stop();
+//		HAL_Delay(1000);
+	}
 
-
-// Line follow PD test
-void line_follow_fw_pd() {
-	double Kp = 0.1;
-  double Kd = 0.01;
-  
-	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
-	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
-	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
-
-  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, &REDLINE, &WOOD);
-  //int16_t dist2 = euclideanDistance(&r2, &g2, &b2, &WOOD, &REDLINE)
-  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, &REDLINE, &WOOD);
-
-  double error = 0 - dist3 + dist1;
-
-  auto end = high_resolution_clock::now();
-
-  double P = error * Kp;
-  double D = Kd*(error - prev_error)/(end - start);
-
-  double control = P + D;
-
-  double dutyL = dutyCycle + control;
-  double dutyR = dutyCycle - control;
-
-	if(dist1 > 80){
-		moveRight(&dutyR);
-	} else if(dist3 > 80) {
-		moveLeft(&dutyL);
-	} else{
-    moveForward(&dutyCycle);
-  }
-    
-  auto start = high_resolution_clock::now();
-  prev_error = error;
-
+//    char str[64] = {0};
+//    sprintf(str, "Euclidean Distances: Dist1 %d\n Dist3 %d\n \n", dist1, dist3);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 }
 
 void line_follow_bw() {
-	moveBackward(&dutyCycle);
-
 	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
 	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
-	//TODO: PID, euclidean distance
-	if(r1 > 120){
-		//opposite of fw
-		moveLeft(&dutyCycle);
-	} else if(r2 > 120) {
-		moveRight(&dutyCycle);
+	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE, WOOD);
+	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE, WOOD);
+
+	if(dist1 > 70){
+		moveRight(&rightTurn);
+	} else if(dist3 > 70) {
+		moveLeft(&leftTurn);
+	} else{
+		moveBackward(&leftBW, &rightBW);
 	}
+
 }
+
+void print(char *str) {
+//    sprintf(str, "Euclidean Distances: Dist1 %d\n Dist3 %d\n \n", dist1, dist3);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
+}
+
+//// Line follow PD test
+//void line_follow_fw_pd() {
+//	double Kp = 0.1;
+//  double Kd = 0.01;
+//
+//	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
+//	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+//	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
+//
+//  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE, WOOD);
+//  //int16_t dist2 = euclideanDistance(&r2, &g2, &b2, &WOOD, &REDLINE)
+//  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE, WOOD);
+//
+//  double error = 0 - dist3 + dist1;
+//
+//  auto end = high_resolution_clock::now();
+//
+//  double P = error * Kp;
+//  double D = Kd*(error - prev_error)/(end - start);
+//
+//  double control = P + D;
+//
+//  double dutyL = dutyCycle + control;
+//  double dutyR = dutyCycle - control;
+//
+//	if(dist1 > 80){
+//		moveRight(&dutyR);
+//	} else if(dist3 > 80) {
+//		moveLeft(&dutyL);
+//	} else{
+//    moveForward(&dutyCycle);
+//  }
+//
+//  auto start = high_resolution_clock::now();
+//  prev_error = error;
+//
+//}
 
 
 

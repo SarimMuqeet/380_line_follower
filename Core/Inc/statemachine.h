@@ -16,6 +16,7 @@ void runStateMachine();
 void idle();
 void search_lego();
 void search_safe();
+void return_to_start();
 void line_follow_fw();
 void line_follow_bw();
 
