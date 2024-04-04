@@ -24,6 +24,7 @@
 #include "Adafruit_TCS34725.h"
 #include "helpers.h"
 #include "statemachine.h"
+#include "PID.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,8 +77,10 @@ uint32_t rightFW = (uint32_t)(COUNTER_PERIOD*RIGHT_FW);
 uint32_t leftBW = (uint32_t)(COUNTER_PERIOD*LEFT_BW);
 uint32_t rightBW = (uint32_t)(COUNTER_PERIOD*RIGHT_BW);
 
-uint32_t leftTurn = (uint32_t)(COUNTER_PERIOD*LEFT_FW);
-uint32_t rightTurn = (uint32_t)(COUNTER_PERIOD*RIGHT_FW);
+uint32_t leftTurn = (uint32_t)(COUNTER_PERIOD*LEFT_FW*0.7);
+uint32_t rightTurn = (uint32_t)(COUNTER_PERIOD*RIGHT_FW*0.7);
+
+uint32_t motorVal1, motorVal2;
 
 
 //PD Global vars
@@ -531,6 +534,9 @@ int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, const uint16_t 
 
 // Movement Functions
 void moveForward(uint32_t *dutyCycleL, uint32_t *dutyCycleR){
+	char str[64] = {0};
+	  	sprintf(str, "dutyCycleL %d\n dutyCycleR %d\n \n", *dutyCycleL, *dutyCycleR);
+	  	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
@@ -600,7 +606,6 @@ void runStateMachine(){
 		break;
 
 	case SEARCH_LEGO:
-//		moveForward(&dutyCycleL, &dutyCycleR);
 		search_lego();
 		break;
 
@@ -644,12 +649,12 @@ void search_lego() {
 
 	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, BULLSEYE_BLUE, REDLINE_RIGHT); // MAKE FOR MIDDLE SENSOR
 
-    char str[64] = {0};
-    sprintf(str, "Blue R2 G2 B2 %d\n %d\n %d\n \n", r2, g2, b2);
-    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
+//    char str[64] = {0};
+//    sprintf(str, "R2 G2 B2 %d\n %d\n %d\n \n", r2, g2, b2);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
 	//detect blue, check bullseye
-//	if(dist2 > 75) {
+//	if(dist2 > 80) {
 //		currState = SECURE_LEGO;
 //	}
 }
@@ -696,20 +701,30 @@ void line_follow_fw() {
 	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
-  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
-  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
+  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD_LEFT);
+  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD_RIGHT);
 
+  pd_control(dist1, dist3);
 
-	if(dist1 > 50){
-		moveLeft(&leftTurn);
+//  char str[64] = {0};
+//  	sprintf(str, "dutyL %d\n dutyR %d\n \n", dutyL, dutyR);
+//  	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
-	} else if(dist3 > 50) {
-		moveRight(&rightTurn);
+  moveForward(&motorVal1, &motorVal2);
 
-	} else{
-		moveForward(&leftFW, &rightFW);
-	}
-
+//  	int error = dist1 - dist3;
+//
+////
+//	if(error > 30){
+//		moveLeft(&leftTurn);
+//
+//	} else if(error < -30) {
+//		moveRight(&rightTurn);
+//
+//	} else {
+//		moveForward(&leftFW, &rightFW);
+//	}
+//
 //	char str[64] = {0};
 //	sprintf(str, "R1 %d\n G1 %d\n B1 %d\n R3 %d\n G3 %d\n B3 %d\n", r1, g1, b1, r3, g3, b3);
 //	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
@@ -742,43 +757,48 @@ void print(char *str) {
 //    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 }
 
-//// Line follow PD test
-//void line_follow_fw_pd() {
-//	double Kp = 0.1;
-//  double Kd = 0.01;
-//
-//	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
-//	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
-//	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
-//
-//  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE, WOOD);
-//  //int16_t dist2 = euclideanDistance(&r2, &g2, &b2, &WOOD, &REDLINE)
-//  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE, WOOD);
-//
-//  double error = 0 - dist3 + dist1;
-//
-//  auto end = high_resolution_clock::now();
-//
-//  double P = error * Kp;
-//  double D = Kd*(error - prev_error)/(end - start);
-//
-//  double control = P + D;
-//
-//  double dutyL = dutyCycle + control;
-//  double dutyR = dutyCycle - control;
-//
-//	if(dist1 > 80){
-//		moveRight(&dutyR);
-//	} else if(dist3 > 80) {
-//		moveLeft(&dutyL);
-//	} else{
-//    moveForward(&dutyCycle);
-//  }
-//
-//  auto start = high_resolution_clock::now();
-//  prev_error = error;
-//
-//}
+// Line follow PD test
+void pd_control(int16_t dist1, int16_t dist3) {
+
+
+//	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
+//	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
+
+	P  = dist1 - dist3;
+	D = P - prevError;
+//	add_to_errors(P);
+	prevError = D;
+
+	motorSpeed = (Kp * P) + (Kd * D);
+//	motorSpeed = (Kp * P);
+
+	motorVal1 = (uint32_t)base1 - (uint32_t)motorSpeed;
+	motorVal2 = (uint32_t)base2 + (uint32_t)motorSpeed;
+
+	char str[64] = {0};
+	sprintf(str, "motorVal1 %d\n motorVal2 %d\n P error value %d\n \n", motorVal1, motorVal2, P);
+	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
+
+	if (motorVal1 > maxspeedL){
+		motorVal1 = maxspeedL;
+	}
+	if (motorVal2 > maxspeedR) {
+		motorVal2 = maxspeedR;
+	}
+	if (motorVal1 < 0){
+		motorVal1 = 0;
+		}
+	if (motorVal2 < 0 ) {
+		motorVal2 = 0;
+	}
+
+}
+
+void add_to_errors (int error) {
+	  for (int i = 9; i > 0; i--)
+		  errors[i] = errors[i-1];
+	  errors[0] = error;
+}
 
 
 
