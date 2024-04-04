@@ -2,11 +2,11 @@
 #define __HELPERS_H_
 
 #define COUNTER_PERIOD 65535
-#define RIGHT_FW 0.73 //try 0.67 //really the right wheel
-#define LEFT_FW 0.67   //try 0.67
+#define RIGHT_FW 0.73*0.5 //try 0.67 //really the right wheel
+#define LEFT_FW 0.67*0.5   //try 0.67
 
-#define LEFT_BW 0.73 //try 0.67
-#define RIGHT_BW 0.73   //try 0.67
+#define LEFT_BW 0.73*0.5 //try 0.67
+#define RIGHT_BW 0.73*0.5   //try 0.67
 
 
 uint16_t r1, g1, b1, c1;
@@ -14,10 +14,12 @@ uint16_t r2, g2, b2, c2;
 uint16_t r3, g3, b3, c3;
 
 
-const uint16_t REDLINE[3] = {139, 46, 75};
+const uint16_t REDLINE_LEFT[3] = {153, 51, 102};
+const uint16_t REDLINE_RIGHT[3] = {153, 51, 51};
+const uint16_t REDLINE_MIDDLE[3] = {0, 0, 0};
 const uint16_t GREENZONE[3] = {43, 88, 125};
-const uint16_t BULLSEYE_BLUE[3] = {31, 70, 164};
-const uint16_t WOOD[3] = {77, 83, 88};
+const uint16_t BULLSEYE_BLUE[3] = {19, 58, 156};
+const uint16_t WOOD[3] = {69, 80, 92};
 
 
 void getRawData_noDelay(Adafruit_TCS34725 *tcs, uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);

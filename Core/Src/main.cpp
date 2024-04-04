@@ -159,19 +159,19 @@ int main(void)
   
 //  auto start = high_resolution_clock::now();
 
-  moveForward(&leftFW, &rightFW);
-  HAL_Delay(2000);
-
-  moveLeft(&leftTurn);
-  HAL_Delay(2000);
-
-  moveBackward(&leftBW, &rightBW);
-  HAL_Delay(2000);
-
-  moveRight(&rightTurn);
-  HAL_Delay(2000);
-
-  stop();
+//  moveForward(&leftFW, &rightFW);
+//  HAL_Delay(2000);
+//
+//  moveLeft(&leftTurn);
+//  HAL_Delay(2000);
+//
+//  moveBackward(&leftBW, &rightBW);
+//  HAL_Delay(2000);
+//
+//  moveRight(&rightTurn);
+//  HAL_Delay(2000);
+//
+//  stop();
 
 //  release();
 //  grab();
@@ -179,58 +179,7 @@ int main(void)
 
   while (1)
   {
-
-//	  runStateMachine();
-
-//	  uint16_t r1, g1, b1, c1;
-//	  uint16_t r2, g2, b2, c2;
-//	  uint16_t r3, g3, b3, c3;
-//
-//
-//	  const uint16_t REDLINE[3] = {139, 46, 75};
-//	  const uint16_t GREENZONE[3] = {43, 88, 125};
-//	  const uint16_t BULLSEYE_BLUE[3] = {31, 70, 164};
-//	  const uint16_t WOOD[3] = {77, 83, 88};
-//
-//
-//    // Get RGB Values
-//	  getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
-//	  getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
-//	  getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
-//
-//	  /* New Format:
-//	   * 	FL = 1
-//	   * 	FC = 2
-//	   * 	FR = 3
-//	   */
-////
-////	  double colorReading1 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r1, &g1, &b1); //goes from 0 to 441.67
-////	  double colorReading2 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r2, &g2, &b2); //goes from 0 to 441.67
-////	  double colorReading3 = euclideanDistance(&GREEN_R, &GREEN_G, &GREEN_B, &r3, &g3, &b3); //goes from 0 to 441.67
-//
-//	  // Testing movement
-//    uint32_t dutyCycle = 0.32*65535;
-//
-//    moveForward(&dutyCycle);
-//    HAL_Delay(1000);
-//    stop();
-//
-//    moveLeft(&dutyCycle);
-//    HAL_Delay(1000);
-//    stop();
-//
-//    moveRight(&dutyCycle);
-//    HAL_Delay(1000);
-//    stop();
-//
-//    moveBackward(&dutyCycle);
-//    HAL_Delay(1000);
-//    stop();
-//
-//    // Test Claw
-//    grab();
-//
-//    release();
+	  runStateMachine();
   }
 }
 
@@ -605,15 +554,7 @@ void moveLeft(uint32_t *dutyCycle){
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
 //  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
-//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, &0);
-
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
-//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
-
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
 
 }
 
@@ -622,15 +563,9 @@ void moveRight(uint32_t *dutyCycle){
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
 //  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
 
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
-//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
-//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
 }
 
 void stop(){
@@ -707,16 +642,16 @@ void idle() {
 void search_lego() {
 	line_follow_fw();
 
-	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, BULLSEYE_BLUE, REDLINE);
-
-	//detect blue, check bullseye
-	if(dist2 > 75) {
-		currState = SECURE_LEGO;
-	}
+	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, BULLSEYE_BLUE, REDLINE_RIGHT); // MAKE FOR MIDDLE SENSOR
 
     char str[64] = {0};
-    sprintf(str, "Blue dist2 %d\n", dist2);
+    sprintf(str, "Blue R2 G2 B2 %d\n %d\n %d\n \n", r2, g2, b2);
     HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
+
+	//detect blue, check bullseye
+//	if(dist2 > 75) {
+//		currState = SECURE_LEGO;
+//	}
 }
 
 
@@ -730,8 +665,8 @@ void search_safe() {
 	line_follow_bw();
 
 	//detect green
-	int16_t dist1 = euclideanDistance(&r2, &g2, &b2, GREENZONE, REDLINE);
-	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, GREENZONE, REDLINE);
+	int16_t dist1 = euclideanDistance(&r2, &g2, &b2, GREENZONE, REDLINE_LEFT);
+	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, GREENZONE, REDLINE_RIGHT);
 
 	//detect green, check for safe zone
 	if(dist1 > 75 || dist3 > 75) {
@@ -742,9 +677,9 @@ void search_safe() {
 void return_to_start() {
 	line_follow_bw();
 
-	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE, WOOD);
-	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE, WOOD);
-	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE, WOOD);
+	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
+	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
+	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
 
 	if((dist1 > 70) && (dist2 > 70) && (dist3 > 70)){
 		stop();
@@ -757,33 +692,27 @@ void return_to_start() {
 //verified
 void line_follow_fw() {
 	
-
 	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
 	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
-  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE, WOOD);
-//  int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE, WOOD);
-  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE, WOOD);
+  int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
+  int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
 
-	//TODO: PID, euclidean distance
-	if(dist1 > 70){
-		//only until FC sees red again
-		//vary DC based on PID
+
+	if(dist1 > 50){
 		moveLeft(&leftTurn);
-//		HAL_Delay(10);
-//		stop();
-	} else if(dist3 > 70) {
+
+	} else if(dist3 > 50) {
 		moveRight(&rightTurn);
-//		HAL_Delay(10);
-//		stop();
+
 	} else{
-//		stop();
 		moveForward(&leftFW, &rightFW);
-//		HAL_Delay(1000);
-//		stop();
-//		HAL_Delay(1000);
 	}
+
+//	char str[64] = {0};
+//	sprintf(str, "R1 %d\n G1 %d\n B1 %d\n R3 %d\n G3 %d\n B3 %d\n", r1, g1, b1, r3, g3, b3);
+//	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
 //    char str[64] = {0};
 //    sprintf(str, "Euclidean Distances: Dist1 %d\n Dist3 %d\n \n", dist1, dist3);
@@ -795,12 +724,12 @@ void line_follow_bw() {
 	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
-	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE, WOOD);
-	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE, WOOD);
+	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
+	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
 
-	if(dist1 > 70){
+	if(dist1 > 50){
 		moveRight(&rightTurn);
-	} else if(dist3 > 70) {
+	} else if(dist3 > 50) {
 		moveLeft(&leftTurn);
 	} else{
 		moveBackward(&leftBW, &rightBW);
