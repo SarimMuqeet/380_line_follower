@@ -636,7 +636,7 @@ void search_lego() {
 //    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
 	//detect blue, check bullseye
-	if(dist2 > 80) {
+	if(dist2 > 65) {
 		currState = SECURE_LEGO;
 	}
 }

@@ -3678,9 +3678,9 @@ void search_lego() {
 //    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
 	//detect blue, check bullseye
-	if(dist2 > 80) {
+	if(dist2 > 65) {
  8001f0a:	f9b7 3006 	ldrsh.w	r3, [r7, #6]
- 8001f0e:	2b50      	cmp	r3, #80	; 0x50
+ 8001f0e:	2b41      	cmp	r3, #65	; 0x41
  8001f10:	dd02      	ble.n	8001f18 <_Z11search_legov+0x2c>
 		currState = SECURE_LEGO;
  8001f12:	4b08      	ldr	r3, [pc, #32]	; (8001f34 <_Z11search_legov+0x48>)
@@ -4681,7 +4681,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  80027b6:	4293      	cmp	r3, r2
  80027b8:	d145      	bne.n	8002846 <_Z41__static_initialization_and_destruction_0ii+0xa6>
 uint32_t lastError = 0;
-double base = 0.265; //0.7; //0.29 0.27
+double base = 0.2675; //0.7; //0.29 0.27
 double calibrateLeft = 1;
 double calibrateRight = 1.025;
 double baseTurn = 0.235;
