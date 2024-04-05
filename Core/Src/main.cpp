@@ -80,7 +80,7 @@ uint32_t rightBW = (uint32_t)(COUNTER_PERIOD*RIGHT_BW);
 uint32_t leftTurn = (uint32_t)(COUNTER_PERIOD*LEFT_FW*0.7);
 uint32_t rightTurn = (uint32_t)(COUNTER_PERIOD*RIGHT_FW*0.7);
 
-uint32_t pwmLeft, pwmRight, pwmLeftFW, pwmRightFW;
+uint32_t pwmLeft, pwmRight, pwmLeftFW, pwmRightFW, pwmStart;
 
 
 //PD Global vars
@@ -159,26 +159,6 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  
-//  auto start = high_resolution_clock::now();
-
-//  moveForward(&leftFW, &rightFW);
-//  HAL_Delay(2000);
-//
-//  moveLeft(&leftTurn);
-//  HAL_Delay(2000);
-//
-//  moveBackward(&leftBW, &rightBW);
-//  HAL_Delay(2000);
-//
-//  moveRight(&rightTurn);
-//  HAL_Delay(2000);
-//
-//  stop();
-
-//  release();
-//  grab();
-
 
   while (1)
   {
@@ -638,8 +618,10 @@ void idle() {
 	int state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
 	//button is active low apparently
 	if(state == GPIO_PIN_RESET) {
-//		grab();
 		release();
+		pwmStart = COUNTER_PERIOD*0.45;
+		moveForward(&pwmStart, &pwmStart);
+		HAL_Delay(150);
 		currState = SEARCH_LEGO;
 	}
 }
@@ -756,25 +738,21 @@ void line_follow_bw() {
 
 }
 
-void print(char *str) {
-//    sprintf(str, "Euclidean Distances: Dist1 %d\n Dist3 %d\n \n", dist1, dist3);
-//    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
-}
-
 // Line follow PD test
 void pd_control(int16_t dist1, int16_t dist3) {
 	P  = (dist1 - dist3)/(100.0f); //-ve when we have to do a right turn
 	D = P - prevError;
+	I = I + P;
 
 	prevError = P;
 
-	motorSpeed = (Kp * P) + (Kd * D);
+	motorSpeed = (Kp * P) + (Kd * D) + (Ki * I);
 
 	double PLeft = (baseTurnLeft - motorSpeed*calibrateLeft);
 	double PRight = (baseTurnRight + motorSpeed*calibrateRight);
 
 	// Cap the motorVals to be between 0 and 1
-	if (PLeft > baseTurnLeft){ //0.22
+	if (PLeft > baseTurnLeft){ //0.23
 		PLeft = baseTurnLeft;
 	}
 	if (PRight > baseTurnRight){

@@ -46,8 +46,6 @@ void grab();
 
 void release();
 
-void print(char *str);
-
 #endif
 
 
