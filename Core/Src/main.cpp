@@ -80,7 +80,7 @@ uint32_t rightBW = (uint32_t)(COUNTER_PERIOD*RIGHT_BW);
 uint32_t leftTurn = (uint32_t)(COUNTER_PERIOD*LEFT_FW*0.7);
 uint32_t rightTurn = (uint32_t)(COUNTER_PERIOD*RIGHT_FW*0.7);
 
-uint32_t pwmLeft, pwmRight;
+uint32_t pwmLeft, pwmRight, pwmLeftFW, pwmRightFW;
 
 
 //PD Global vars
@@ -767,30 +767,29 @@ void pd_control(int16_t dist1, int16_t dist3) {
 
 //	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
 //	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
-	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
+//	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
 
-	P  = (dist1 - dist3)/(100.0f);
+	P  = (dist1 - dist3)/(100.0f); //-ve when we have to do a right turn
 	D = P - prevError;
 //	add_to_errors(P);
 	prevError = P;
 
-	motorSpeed = (Kp * P) + (Kd * D); //
+	motorSpeed = (Kp * P) + (Kd * D);
 
-	double PLeft = (baseLeft - motorSpeed*calibrateLeft); // base1 = 0.55, min=0, max=1
-	double PRight = (baseRight + motorSpeed*calibrateRight);
-
+	double PLeft = (baseTurnLeft - motorSpeed*calibrateLeft);
+	double PRight = (baseTurnRight + motorSpeed*calibrateRight);
 
 	// Cap the motorVals to be between 0 and 1
-	if (PLeft > maxspeedL){
-		PLeft = maxspeedL;
+	if (PLeft > baseTurnLeft){
+		PLeft = baseTurnLeft;
 	}
-	if (PRight > maxspeedR){
-		PRight = maxspeedR;
+	if (PRight > baseTurnRight){
+		PRight = baseTurnRight;
 	}
-	if (PLeft < 0){
+	if (PLeft < 0.1){
 		PLeft = 0;
 		}
-	if (PRight < 0 ) {
+	if (PRight < 0.1 ) {
 		PRight = 0;
 	}
 
@@ -798,48 +797,21 @@ void pd_control(int16_t dist1, int16_t dist3) {
 	pwmLeft = PLeft*COUNTER_PERIOD;
 	pwmRight = PRight*COUNTER_PERIOD;
 
+	//base forward
+	pwmLeftFW = baseLeft*COUNTER_PERIOD;
+	pwmRightFW = baseRight*COUNTER_PERIOD;
 
 //	char str[64] = {0};
 //	sprintf(str, "pwmLeft %d\n pwmRight %d\n P error value %6.4lf\n \n", pwmLeft, pwmRight, P);
 //	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
-//- helps with big turns
-//	if(dist2 > 70){
-//		moveForward(&pwmLeft, &pwmRight);
-//	}
-
-
-	double turnFactor = (100 - dist2)/100.0f;
-//	double turnFactor = 1.2;
-//	if (dist2 > 70){ //if middle sensor sees at least 80% RED
-//		turnFactor = 0.3;
-//	}//if middle on red, turn less
-
-
-	if (P < -0.2){
-		pwmLeft = (uint32_t)(pwmLeft*turnFactor);
-		pwmRight = (uint32_t)(pwmRight*turnFactor);
+	if (P < -0.20){
 		moveRight(&pwmLeft);
-	} else if (P > 0.2){
-		pwmLeft = (uint32_t)(pwmLeft*turnFactor);
-		pwmRight = (uint32_t)(pwmRight*turnFactor);
+	} else if (P > 0.20){
 		moveLeft(&pwmRight);
 	} else {
-		moveForward(&pwmLeft, &pwmRight);
+		moveForward(&pwmLeftFW, &pwmRightFW);
 	}
-
-
-
-
-//	if (P < -0.2 && dist2 < 65){
-//		moveRight(&pwmLeft);
-//	} else if (P > 0.2 && dist2 < 65){
-//		moveLeft(&pwmRight);
-//	} else
-//	{
-//		moveForward(&pwmLeft, &pwmRight);
-//	}
-
 
 
 }

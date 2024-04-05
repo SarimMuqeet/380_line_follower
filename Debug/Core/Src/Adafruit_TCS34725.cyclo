@@ -1,0 +1,24 @@
+../Core/Src/Adafruit_TCS34725.cpp:45:7:float powf(float, float)	1
+../Core/Src/Adafruit_TCS34725.cpp:60:6:void Adafruit_TCS34725::setMuxChannel(uint8_t)	1
+../Core/Src/Adafruit_TCS34725.cpp:74:6:void Adafruit_TCS34725::write8(uint8_t, uint32_t)	2
+../Core/Src/Adafruit_TCS34725.cpp:99:9:uint8_t Adafruit_TCS34725::read8(uint8_t)	2
+../Core/Src/Adafruit_TCS34725.cpp:126:10:uint16_t Adafruit_TCS34725::read16(uint8_t)	2
+../Core/Src/Adafruit_TCS34725.cpp:146:6:void Adafruit_TCS34725::enable()	11
+../Core/Src/Adafruit_TCS34725.cpp:181:6:void Adafruit_TCS34725::disable()	1
+../Core/Src/Adafruit_TCS34725.cpp:195:1:Adafruit_TCS34725::Adafruit_TCS34725(tcs34725IntegrationTime_t, tcs34725Gain_t)	1
+../Core/Src/Adafruit_TCS34725.cpp:208:6:bool Adafruit_TCS34725::begin(uint8_t)	1
+../Core/Src/Adafruit_TCS34725.cpp:223:6:bool Adafruit_TCS34725::begin(uint8_t, I2C_HandleTypeDef*)	1
+../Core/Src/Adafruit_TCS34725.cpp:238:6:bool Adafruit_TCS34725::begin(uint8_t, I2C_HandleTypeDef*, uint8_t)	1
+../Core/Src/Adafruit_TCS34725.cpp:251:6:bool Adafruit_TCS34725::begin()	1
+../Core/Src/Adafruit_TCS34725.cpp:262:6:bool Adafruit_TCS34725::init()	3
+../Core/Src/Adafruit_TCS34725.cpp:289:6:void Adafruit_TCS34725::setIntegrationTime(tcs34725IntegrationTime_t)	2
+../Core/Src/Adafruit_TCS34725.cpp:305:6:void Adafruit_TCS34725::setGain(tcs34725Gain_t)	2
+../Core/Src/Adafruit_TCS34725.cpp:327:6:void Adafruit_TCS34725::getRawData(uint16_t*, uint16_t*, uint16_t*, uint16_t*)	12
+../Core/Src/Adafruit_TCS34725.cpp:376:6:void Adafruit_TCS34725::getRawDataOneShot(uint16_t*, uint16_t*, uint16_t*, uint16_t*)	2
+../Core/Src/Adafruit_TCS34725.cpp:397:6:void Adafruit_TCS34725::getRGB(float*, float*, float*)	2
+../Core/Src/Adafruit_TCS34725.cpp:423:10:uint16_t Adafruit_TCS34725::calculateColorTemperature(uint16_t, uint16_t, uint16_t)	4
+../Core/Src/Adafruit_TCS34725.cpp:470:10:uint16_t Adafruit_TCS34725::calculateColorTemperature_dn40(uint16_t, uint16_t, uint16_t, uint16_t)	7
+../Core/Src/Adafruit_TCS34725.cpp:560:10:uint16_t Adafruit_TCS34725::calculateLux(uint16_t, uint16_t, uint16_t)	1
+../Core/Src/Adafruit_TCS34725.cpp:575:6:void Adafruit_TCS34725::setInterrupt(bool)	2
+../Core/Src/Adafruit_TCS34725.cpp:588:6:void Adafruit_TCS34725::clearInterrupt()	2
+../Core/Src/Adafruit_TCS34725.cpp:602:6:void Adafruit_TCS34725::setIntLimits(uint16_t, uint16_t)	1
