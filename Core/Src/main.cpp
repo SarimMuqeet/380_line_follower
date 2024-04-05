@@ -81,6 +81,10 @@ uint32_t leftTurn = (uint32_t)(COUNTER_PERIOD*LEFT_FW*0.7);
 uint32_t rightTurn = (uint32_t)(COUNTER_PERIOD*RIGHT_FW*0.7);
 
 uint32_t pwmLeft, pwmRight;
+uint32_t pwmFwLeft, pwmFwRight;
+
+uint32_t startSpeedL = 0.7*COUNTER_PERIOD;
+uint32_t startSpeedR = 0.7*COUNTER_PERIOD;
 
 
 //PD Global vars
@@ -179,6 +183,7 @@ int main(void)
 //  release();
 //  grab();
 
+  release();
 
   while (1)
   {
@@ -639,7 +644,9 @@ void idle() {
 	//button is active low apparently
 	if(state == GPIO_PIN_RESET) {
 //		grab();
-		release();
+//		release();
+		moveForward(&startSpeedL, &startSpeedR);
+		HAL_Delay(100);
 		currState = SEARCH_LEGO;
 	}
 }
@@ -654,9 +661,9 @@ void search_lego() {
 //    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
 	//detect blue, check bullseye
-//	if(dist2 > 80) {
-//		currState = SECURE_LEGO;
-//	}
+	if(dist2 > 80) {
+		currState = SECURE_LEGO;
+	}
 }
 
 
@@ -764,6 +771,16 @@ void print(char *str) {
 // Line follow PD test
 void pd_control(int16_t dist1, int16_t dist3) {
 
+//	int val = dist1 - dist3;
+//
+//	if(val > 40) {
+//		moveLeft(&rightTurn);
+//	} else if (val < -40) {
+//		moveRight(&leftTurn);
+//	}else {
+//		moveForward(&leftFW, &rightFW);
+//	}
+
 
 //	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
 //	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
@@ -776,8 +793,11 @@ void pd_control(int16_t dist1, int16_t dist3) {
 
 	motorSpeed = (Kp * P) + (Kd * D); //
 
-	double PLeft = (baseLeft - motorSpeed*calibrateLeft); // base1 = 0.55, min=0, max=1
-	double PRight = (baseRight + motorSpeed*calibrateRight);
+	double PLeft = (baseTurnLeft - motorSpeed*calibrateLeft); // base1 = 0.55, min=0, max=1
+	double PRight = (baseTurnRight + motorSpeed*calibrateRight);
+
+	double PFwLeft  = (baseLeft - motorSpeed*calibrateLeft); // base1 = 0.55, min=0, max=1
+	double PFwRight = (baseRight + motorSpeed*calibrateRight);
 
 
 	// Cap the motorVals to be between 0 and 1
@@ -794,9 +814,25 @@ void pd_control(int16_t dist1, int16_t dist3) {
 		PRight = 0;
 	}
 
+	if (PFwLeft > maxspeedL){
+		PFwLeft = maxspeedL;
+	}
+	if (PFwRight > maxspeedR){
+		PFwRight = maxspeedR;
+	}
+	if (PFwLeft < 0){
+		PFwLeft = 0;
+		}
+	if (PFwRight < 0 ) {
+		PFwRight = 0;
+	}
+
 	//convert to pwm values 0-65535
 	pwmLeft = PLeft*COUNTER_PERIOD;
 	pwmRight = PRight*COUNTER_PERIOD;
+
+	pwmFwLeft = PFwLeft*COUNTER_PERIOD;
+	pwmFwRight = PFwRight*COUNTER_PERIOD;
 
 
 //	char str[64] = {0};
@@ -816,30 +852,17 @@ void pd_control(int16_t dist1, int16_t dist3) {
 //	}//if middle on red, turn less
 
 
-	if (P < -0.2){
+	if (P < -0.02){
 		pwmLeft = (uint32_t)(pwmLeft*turnFactor);
 		pwmRight = (uint32_t)(pwmRight*turnFactor);
 		moveRight(&pwmLeft);
-	} else if (P > 0.2){
+	} else if (P > 0.02){
 		pwmLeft = (uint32_t)(pwmLeft*turnFactor);
 		pwmRight = (uint32_t)(pwmRight*turnFactor);
 		moveLeft(&pwmRight);
 	} else {
-		moveForward(&pwmLeft, &pwmRight);
+		moveForward(&pwmFwLeft, &pwmFwRight);
 	}
-
-
-
-
-//	if (P < -0.2 && dist2 < 65){
-//		moveRight(&pwmLeft);
-//	} else if (P > 0.2 && dist2 < 65){
-//		moveLeft(&pwmRight);
-//	} else
-//	{
-//		moveForward(&pwmLeft, &pwmRight);
-//	}
-
 
 
 }
