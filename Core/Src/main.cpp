@@ -159,7 +159,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+//  release();
   while (1)
   {
 	  runStateMachine();
@@ -619,6 +619,7 @@ void idle() {
 	//button is active low apparently
 	if(state == GPIO_PIN_RESET) {
 		release();
+		HAL_Delay(100);
 		pwmStart = COUNTER_PERIOD*0.45;
 		moveForward(&pwmStart, &pwmStart);
 		HAL_Delay(150);
@@ -629,14 +630,15 @@ void idle() {
 void search_lego() {
 	line_follow_fw();
 
+	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, BULLSEYE_BLUE, REDLINE_RIGHT);
 
 //    char str[64] = {0};
-//    sprintf(str, "R2 G2 B2 %d\n %d\n %d\n \n", r2, g2, b2);
+//    sprintf(str, "R2 G2 B2 %d\n %d\n %d\n \n dist2 %d \n", r2, g2, b2, dist2);
 //    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
 	//detect blue, check bullseye
-	if(dist2 > 65) {
+	if(dist2 > 80) {
 		currState = SECURE_LEGO;
 	}
 }
