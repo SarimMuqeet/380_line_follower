@@ -763,15 +763,9 @@ void print(char *str) {
 
 // Line follow PD test
 void pd_control(int16_t dist1, int16_t dist3) {
-
-
-//	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
-//	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
-//	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
-
 	P  = (dist1 - dist3)/(100.0f); //-ve when we have to do a right turn
 	D = P - prevError;
-//	add_to_errors(P);
+
 	prevError = P;
 
 	motorSpeed = (Kp * P) + (Kd * D);
@@ -780,17 +774,17 @@ void pd_control(int16_t dist1, int16_t dist3) {
 	double PRight = (baseTurnRight + motorSpeed*calibrateRight);
 
 	// Cap the motorVals to be between 0 and 1
-	if (PLeft > baseTurnLeft){
+	if (PLeft > baseTurnLeft){ //0.22
 		PLeft = baseTurnLeft;
 	}
 	if (PRight > baseTurnRight){
 		PRight = baseTurnRight;
 	}
-	if (PLeft < 0.1){
-		PLeft = 0;
+	if (PLeft < 0.08){
+		PLeft = 0.08;
 		}
-	if (PRight < 0.1 ) {
-		PRight = 0;
+	if (PRight < 0.08 ) {
+		PRight = 0.08;
 	}
 
 	//convert to pwm values 0-65535
@@ -801,28 +795,14 @@ void pd_control(int16_t dist1, int16_t dist3) {
 	pwmLeftFW = baseLeft*COUNTER_PERIOD;
 	pwmRightFW = baseRight*COUNTER_PERIOD;
 
-//	char str[64] = {0};
-//	sprintf(str, "pwmLeft %d\n pwmRight %d\n P error value %6.4lf\n \n", pwmLeft, pwmRight, P);
-//	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
-
-	if (P < -0.20){
+	if (P < -0.05){
 		moveRight(&pwmLeft);
-	} else if (P > 0.20){
+	} else if (P > 0.05){
 		moveLeft(&pwmRight);
 	} else {
 		moveForward(&pwmLeftFW, &pwmRightFW);
 	}
-
-
 }
-
-void add_to_errors (int error) {
-	  for (int i = 9; i > 0; i--)
-		  errors[i] = errors[i-1];
-	  errors[0] = error;
-}
-
-
 
 /* USER CODE END 4 */
 
