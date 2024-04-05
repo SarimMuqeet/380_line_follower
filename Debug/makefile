@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (10.3-2021.10)
+# Toolchain: GNU Tools for STM32 (11.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -21,6 +21,9 @@ endif
 ifneq ($(strip $(C++_DEPS)),)
 -include $(C++_DEPS)
 endif
+ifneq ($(strip $(CCM_DEPS)),)
+-include $(CCM_DEPS)
+endif
 ifneq ($(strip $(C_UPPER_DEPS)),)
 -include $(C_UPPER_DEPS)
 endif
@@ -32,6 +35,12 @@ ifneq ($(strip $(S_DEPS)),)
 endif
 ifneq ($(strip $(S_UPPER_DEPS)),)
 -include $(S_UPPER_DEPS)
+endif
+ifneq ($(strip $(CXXM_DEPS)),)
+-include $(CXXM_DEPS)
+endif
+ifneq ($(strip $(C++M_DEPS)),)
+-include $(C++M_DEPS)
 endif
 ifneq ($(strip $(C_DEPS)),)
 -include $(C_DEPS)
@@ -75,8 +84,8 @@ all: main-build
 main-build: 380_line_follower_cpp.elf secondary-outputs
 
 # Tool invocations
-380_line_follower_cpp.elf 380_line_follower_cpp.map: $(OBJS) $(USER_OBJS) C:\Users\sarim\STM32CubeIDE\380_project_cpp\380_line_follower_cpp\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "380_line_follower_cpp.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\sarim\STM32CubeIDE\380_project_cpp\380_line_follower_cpp\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="380_line_follower_cpp.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+380_line_follower_cpp.elf 380_line_follower_cpp.map: $(OBJS) $(USER_OBJS) C:\Users\russe\Documents\Waterloo\3B\MTE380\code\380_line_follower\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-g++ -o "380_line_follower_cpp.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\russe\Documents\Waterloo\3B\MTE380\code\380_line_follower\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="380_line_follower_cpp.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

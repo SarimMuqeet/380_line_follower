@@ -763,22 +763,16 @@ void print(char *str) {
 
 // Line follow PD test
 void pd_control(int16_t dist1, int16_t dist3) {
-
-
-//	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
-//	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
 	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
 
 	P  = (dist1 - dist3)/(100.0f);
 	D = P - prevError;
-//	add_to_errors(P);
 	prevError = P;
 
 	motorSpeed = (Kp * P) + (Kd * D); //
 
 	double PLeft = (baseLeft - motorSpeed*calibrateLeft); // base1 = 0.55, min=0, max=1
 	double PRight = (baseRight + motorSpeed*calibrateRight);
-
 
 	// Cap the motorVals to be between 0 and 1
 	if (PLeft > maxspeedL){
@@ -815,18 +809,31 @@ void pd_control(int16_t dist1, int16_t dist3) {
 //		turnFactor = 0.3;
 //	}//if middle on red, turn less
 
+	float prevTurn;
 
-	if (P < -0.2){
+	if (P < -0.3){
 		pwmLeft = (uint32_t)(pwmLeft*turnFactor);
 		pwmRight = (uint32_t)(pwmRight*turnFactor);
+		prevTurn = P;
 		moveRight(&pwmLeft);
-	} else if (P > 0.2){
+	} else if (P > 0.3){
 		pwmLeft = (uint32_t)(pwmLeft*turnFactor);
 		pwmRight = (uint32_t)(pwmRight*turnFactor);
+		prevTurn = P;
 		moveLeft(&pwmRight);
-	} else {
-		moveForward(&pwmLeft, &pwmRight);
+	} else if (dist2 < 20){ //if all 3 sensors see wood
+		if(prevTurn > 0){
+			moveLeft(&pwmRight);
+		}else {
+			moveRight(&pwmLeft);
+		}
 	}
+	else { //only front sensor on red
+		moveForward(&pwmLeft, &pwmRight);
+		prevTurn = 0;
+	}
+
+
 
 
 
