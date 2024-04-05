@@ -823,6 +823,8 @@ void pd_control(int16_t dist1, int16_t dist3) {
 		moveLeft(&pwmRight);
 	} else if (dist2 < 20){ //if all 3 sensors see wood
 		if(prevTurn > 0){
+			//PROBLEM: the pwmRight and pwmLeft values are overwritten each iteration,
+			// this means if all 3 sensors see wood the values are going to be off
 			moveLeft(&pwmRight);
 		}else {
 			moveRight(&pwmLeft);
