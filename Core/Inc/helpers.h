@@ -39,6 +39,12 @@ void moveLeft(uint32_t *dutyCycle);
 
 void moveRight(uint32_t *dutyCycle);
 
+void moveRightBw(uint32_t *dutyCycle);
+
+void moveLeftBw(uint32_t *dutyCycle);
+
+void turn_180();
+
 void stop();
 
 // Claw Functions

@@ -554,6 +554,36 @@ void moveRight(uint32_t *dutyCycle){
 
 }
 
+void moveLeftBw(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+
+}
+
+void moveRightBw(uint32_t *dutyCycle){
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycle);
+//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycle);
+
+}
+
+void turn_180(){
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, *dutyCycleL);
+//  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, *dutyCycleR);
+
+}
+
 void stop(){
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
@@ -619,7 +649,7 @@ void idle() {
 	//button is active low apparently
 	if(state == GPIO_PIN_RESET) {
 		release();
-		HAL_Delay(100);
+//		HAL_Delay(100);
 		pwmStart = COUNTER_PERIOD*0.45;
 		moveForward(&pwmStart, &pwmStart);
 		HAL_Delay(150);
@@ -651,20 +681,30 @@ void search_safe() {
 //	sprintf(str, "SEARCH SAFE\n");
 //	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
-	line_follow_bw();
 
-	//detect green
-	int16_t dist1 = euclideanDistance(&r2, &g2, &b2, GREENZONE, REDLINE_LEFT);
-	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, GREENZONE, REDLINE_RIGHT);
+	// 180 turn
+	uint32_t dC_180 = 1;
+//	moveLeft(&dC_180);
+	turn_180();
+	HAL_Delay(700);
 
-	//detect green, check for safe zone
-	if(dist1 > 75 || dist3 > 75) {
-		currState = DROPOFF_LEGO;
-	}
+	currState = RETURN_TO_START;
+
+//	line_follow();
+//
+//	//detect green
+//	int16_t dist1 = euclideanDistance(&r2, &g2, &b2, GREENZONE, REDLINE_LEFT);
+//	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, GREENZONE, REDLINE_RIGHT);
+//
+//	//detect green, check for safe zone
+//	if(dist1 > 75 || dist3 > 75) {
+//		currState = DROPOFF_LEGO;
+//	}
 }
 
 void return_to_start() {
-	line_follow_bw();
+//	line_follow_bw();
+	line_follow_fw();
 
 	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
 	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
@@ -672,6 +712,7 @@ void return_to_start() {
 
 	if((dist1 > 70) && (dist2 > 70) && (dist3 > 70)){
 		stop();
+		release();
 		currState = IDLE;
 	}
 
@@ -744,7 +785,7 @@ void pd_control(int16_t dist1, int16_t dist3) {
 }
 
 void pd_control_bw(int16_t dist1, int16_t dist3) {
-	P  = (dist1 - dist3)/(100.0f); //-ve when we have to do a right turn
+	P  = (dist3 - dist1)/(100.0f); //-ve when we have to do a right turn
 	D = P - prevError;
 	I = I + P;
 
@@ -778,9 +819,9 @@ void pd_control_bw(int16_t dist1, int16_t dist3) {
 	pwmRightFW = baseRight*COUNTER_PERIOD;
 
 	if (P < -0.075){
-		moveRight(&pwmLeft);
+		moveRightBw(&pwmLeft);
 	} else if (P > 0.075){
-		moveLeft(&pwmRight);
+		moveLeftBw(&pwmRight);
 	} else {
 		moveBackward(&pwmLeftFW, &pwmRightFW);
 	}
