@@ -629,16 +629,16 @@ void idle() {
 void search_lego() {
 	line_follow_fw();
 
-	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, BULLSEYE_BLUE, REDLINE_RIGHT); // MAKE FOR MIDDLE SENSOR
+	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, BULLSEYE_BLUE, REDLINE_RIGHT);
 
 //    char str[64] = {0};
 //    sprintf(str, "R2 G2 B2 %d\n %d\n %d\n \n", r2, g2, b2);
 //    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
 	//detect blue, check bullseye
-//	if(dist2 > 80) {
-//		currState = SECURE_LEGO;
-//	}
+	if(dist2 > 80) {
+		currState = SECURE_LEGO;
+	}
 }
 
 
@@ -676,66 +676,25 @@ void return_to_start() {
 }
 
 
-//verified
 void line_follow_fw() {
 	
 	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
-	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
   int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD_LEFT);
   int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD_RIGHT);
 
   pd_control(dist1, dist3);
-
-//  char str[64] = {0};
-//  	sprintf(str, "dutyL %d\n dutyR %d\n \n", dutyL, dutyR);
-//  	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
-
-
-
-//  moveForward(&pwmLeft, &pwmRight);
-
-
-
-//  	int error = dist1 - dist3;
-//
-////
-//	if(error > 30){
-//		moveLeft(&leftTurn);
-//
-//	} else if(error < -30) {
-//		moveRight(&rightTurn);
-//
-//	} else {
-//		moveForward(&leftFW, &rightFW);
-//	}
-//
-//	char str[64] = {0};
-//	sprintf(str, "R1 %d\n G1 %d\n B1 %d\n R3 %d\n G3 %d\n B3 %d\n", r1, g1, b1, r3, g3, b3);
-//	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
-
-//    char str[64] = {0};
-//    sprintf(str, "Euclidean Distances: Dist1 %d\n Dist3 %d\n \n", dist1, dist3);
-//    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 }
 
 void line_follow_bw() {
 	getRawData_noDelay(&tcsFL, &r1, &g1, &b1, &c1);
-	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
 	getRawData_noDelay(&tcsFR, &r3, &g3, &b3, &c3);
 
 	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
 	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
 
-	if(dist1 > 50){
-		moveRight(&rightTurn);
-	} else if(dist3 > 50) {
-		moveLeft(&leftTurn);
-	} else{
-		moveBackward(&leftBW, &rightBW);
-	}
-
+	pd_control_bw(dist3, dist1);
 }
 
 // Line follow PD test
@@ -773,12 +732,55 @@ void pd_control(int16_t dist1, int16_t dist3) {
 	pwmLeftFW = baseLeft*COUNTER_PERIOD;
 	pwmRightFW = baseRight*COUNTER_PERIOD;
 
-	if (P < -0.05){
+	if (P < -0.075){
 		moveRight(&pwmLeft);
-	} else if (P > 0.05){
+	} else if (P > 0.075){
 		moveLeft(&pwmRight);
 	} else {
 		moveForward(&pwmLeftFW, &pwmRightFW);
+	}
+}
+
+void pd_control_bw(int16_t dist1, int16_t dist3) {
+	P  = (dist1 - dist3)/(100.0f); //-ve when we have to do a right turn
+	D = P - prevError;
+	I = I + P;
+
+	prevError = P;
+
+	motorSpeed = (Kp * P) + (Kd * D) + (Ki * I);
+
+	double PLeft = (baseTurnLeft - motorSpeed*calibrateLeft);
+	double PRight = (baseTurnRight + motorSpeed*calibrateRight);
+
+	// Cap the motorVals to be between 0 and 1
+	if (PLeft > baseTurnLeft){ //0.23
+		PLeft = baseTurnLeft;
+	}
+	if (PRight > baseTurnRight){
+		PRight = baseTurnRight;
+	}
+	if (PLeft < 0.08){
+		PLeft = 0.08;
+		}
+	if (PRight < 0.08 ) {
+		PRight = 0.08;
+	}
+
+	//convert to pwm values 0-65535
+	pwmLeft = PLeft*COUNTER_PERIOD;
+	pwmRight = PRight*COUNTER_PERIOD;
+
+	//base forward
+	pwmLeftFW = baseLeft*COUNTER_PERIOD;
+	pwmRightFW = baseRight*COUNTER_PERIOD;
+
+	if (P < -0.075){
+		moveRight(&pwmLeft);
+	} else if (P > 0.075){
+		moveLeft(&pwmRight);
+	} else {
+		moveBackward(&pwmLeftFW, &pwmRightFW);
 	}
 }
 
