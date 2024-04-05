@@ -593,7 +593,7 @@ void stop(){
 
 // Claw Functions
 void grab(){
-  uint32_t pulseWidth = 0.075*65535;
+  uint32_t pulseWidth = 0.1*65535;
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseWidth);
   HAL_Delay(500);
 
@@ -649,7 +649,7 @@ void idle() {
 	//button is active low apparently
 	if(state == GPIO_PIN_RESET) {
 		release();
-//		HAL_Delay(100);
+//		HAL_Delay(150);
 		pwmStart = COUNTER_PERIOD*0.45;
 		moveForward(&pwmStart, &pwmStart);
 		HAL_Delay(150);
@@ -667,6 +667,9 @@ void search_lego() {
 //    sprintf(str, "R2 G2 B2 %d\n %d\n %d\n \n dist2 %d \n", r2, g2, b2, dist2);
 //    HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
+//	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD_LEFT);
+//	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD_RIGHT);
+
 	//detect blue, check bullseye
 	if(dist2 > 80) {
 		currState = SECURE_LEGO;
@@ -681,25 +684,35 @@ void search_safe() {
 //	sprintf(str, "SEARCH SAFE\n");
 //	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
+	getRawData_noDelay(&tcsFC, &r2, &g2, &b2, &c2);
+	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, BULLSEYE_BLUE);
 
 	// 180 turn
-	uint32_t dC_180 = 1;
-//	moveLeft(&dC_180);
+
 	turn_180();
-	HAL_Delay(700);
-
+	HAL_Delay(680);
+	pwmStart = COUNTER_PERIOD*0.40;
+	moveForward(&pwmStart, &pwmStart);
+	HAL_Delay(30);
 	currState = RETURN_TO_START;
-
-//	line_follow();
 //
-//	//detect green
-//	int16_t dist1 = euclideanDistance(&r2, &g2, &b2, GREENZONE, REDLINE_LEFT);
-//	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, GREENZONE, REDLINE_RIGHT);
-//
-//	//detect green, check for safe zone
-//	if(dist1 > 75 || dist3 > 75) {
-//		currState = DROPOFF_LEGO;
+//	if(dist2 < 70){
+//		turn_180();
+//		stop();
+//		HAL_Delay(50)
+//	}else{
+//		pwmStart = COUNTER_PERIOD*0.45;
+//		moveForward(&pwmStart, &pwmStart);
+//		HAL_Delay(100);
+//		currState = RETURN_TO_START;
 //	}
+
+
+
+
+//	HAL_Delay(800);
+
+
 }
 
 void return_to_start() {
@@ -707,10 +720,10 @@ void return_to_start() {
 	line_follow_fw();
 
 	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
-	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
+//	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
 	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
 
-	if((dist1 > 70) && (dist2 > 70) && (dist3 > 70)){
+	if((dist1 > 60) && (dist3 > 60)){
 		stop();
 		release();
 		currState = IDLE;
@@ -760,11 +773,11 @@ void pd_control(int16_t dist1, int16_t dist3) {
 	if (PRight > baseTurnRight){
 		PRight = baseTurnRight;
 	}
-	if (PLeft < 0.08){
-		PLeft = 0.08;
+	if (PLeft < 0.09){
+		PLeft = 0.09;
 		}
-	if (PRight < 0.08 ) {
-		PRight = 0.08;
+	if (PRight < 0.09 ) {
+		PRight = 0.09;
 	}
 
 	//convert to pwm values 0-65535
@@ -775,9 +788,9 @@ void pd_control(int16_t dist1, int16_t dist3) {
 	pwmLeftFW = baseLeft*COUNTER_PERIOD;
 	pwmRightFW = baseRight*COUNTER_PERIOD;
 
-	if (P < -0.075){
+	if (P < -0.03){
 		moveRight(&pwmLeft);
-	} else if (P > 0.075){
+	} else if (P > 0.03){
 		moveLeft(&pwmRight);
 	} else {
 		moveForward(&pwmLeftFW, &pwmRightFW);
@@ -803,11 +816,11 @@ void pd_control_bw(int16_t dist1, int16_t dist3) {
 	if (PRight > baseTurnRight){
 		PRight = baseTurnRight;
 	}
-	if (PLeft < 0.08){
-		PLeft = 0.08;
+	if (PLeft < 0.085){
+		PLeft = 0.085;
 		}
-	if (PRight < 0.08 ) {
-		PRight = 0.08;
+	if (PRight < 0.085 ) {
+		PRight = 0.085;
 	}
 
 	//convert to pwm values 0-65535
@@ -818,9 +831,9 @@ void pd_control_bw(int16_t dist1, int16_t dist3) {
 	pwmLeftFW = baseLeft*COUNTER_PERIOD;
 	pwmRightFW = baseRight*COUNTER_PERIOD;
 
-	if (P < -0.075){
+	if (P < -0.23){
 		moveRightBw(&pwmLeft);
-	} else if (P > 0.075){
+	} else if (P > 0.23){
 		moveLeftBw(&pwmRight);
 	} else {
 		moveBackward(&pwmLeftFW, &pwmRightFW);

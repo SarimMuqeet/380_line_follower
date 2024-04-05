@@ -1,15 +1,15 @@
 #ifndef __PID_H
 #define __PID_H_
 
-double Kp = 0.065;
+double Kp = 0.075;
 double Ki = 0;
-double Kd = 0.22;
+double Kd = 0.55; //0.4
 float P, I, D;
 uint32_t lastError = 0;
-double base = 0.2675; //0.7; //0.29 0.27
+double base = 0.285; //0.265
 double calibrateLeft = 1;
-double calibrateRight = 1.025;
-double baseTurn = 0.235;
+double calibrateRight = 1;
+double baseTurn = 0.243; //0.243
 double baseTurnLeft = baseTurn*calibrateLeft;
 double baseTurnRight = baseTurn*calibrateLeft;
 
