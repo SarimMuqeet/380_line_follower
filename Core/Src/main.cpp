@@ -80,7 +80,7 @@ uint32_t rightBW = (uint32_t)(COUNTER_PERIOD*RIGHT_BW);
 uint32_t leftTurn = (uint32_t)(COUNTER_PERIOD*LEFT_FW*0.7);
 uint32_t rightTurn = (uint32_t)(COUNTER_PERIOD*RIGHT_FW*0.7);
 
-uint32_t motorVal1, motorVal2;
+uint32_t pwmLeft, pwmRight;
 
 
 //PD Global vars
@@ -534,9 +534,9 @@ int16_t euclideanDistance(uint16_t *r, uint16_t *g, uint16_t *b, const uint16_t 
 
 // Movement Functions
 void moveForward(uint32_t *dutyCycleL, uint32_t *dutyCycleR){
-	char str[64] = {0};
-	  	sprintf(str, "dutyCycleL %d\n dutyCycleR %d\n \n", *dutyCycleL, *dutyCycleR);
-	  	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
+//	char str[64] = {0};
+//	  	sprintf(str, "dutyCycleL %d\n dutyCycleR %d\n \n", *dutyCycleL, *dutyCycleR);
+//	  	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
@@ -712,7 +712,7 @@ void line_follow_fw() {
 
 
 
-//  moveForward(&motorVal1, &motorVal2);
+//  moveForward(&pwmLeft, &pwmRight);
 
 
 
@@ -767,16 +767,17 @@ void pd_control(int16_t dist1, int16_t dist3) {
 
 //	int16_t dist1 = euclideanDistance(&r1, &g1, &b1, REDLINE_LEFT, WOOD);
 //	int16_t dist3 = euclideanDistance(&r3, &g3, &b3, REDLINE_RIGHT, WOOD);
+	int16_t dist2 = euclideanDistance(&r2, &g2, &b2, REDLINE_RIGHT, WOOD);
 
 	P  = (dist1 - dist3)/(100.0f);
 	D = P - prevError;
 //	add_to_errors(P);
-	prevError = D;
+	prevError = P;
 
-	motorSpeed = (Kp * P) + (Kd * D); //Kp =0.55
+	motorSpeed = (Kp * P) + (Kd * D); //
 
-	double PLeft = (base1 - motorSpeed); // base1 = 0.55, min=0, max=1
-	double PRight = (base2 + motorSpeed);
+	double PLeft = (baseLeft - motorSpeed*calibrateLeft); // base1 = 0.55, min=0, max=1
+	double PRight = (baseRight + motorSpeed*calibrateRight);
 
 
 	// Cap the motorVals to be between 0 and 1
@@ -794,15 +795,52 @@ void pd_control(int16_t dist1, int16_t dist3) {
 	}
 
 	//convert to pwm values 0-65535
-	motorVal1 = PLeft*COUNTER_PERIOD;
-	motorVal2 = PRight*COUNTER_PERIOD;
+	pwmLeft = PLeft*COUNTER_PERIOD;
+	pwmRight = PRight*COUNTER_PERIOD;
 
 
-	char str[64] = {0};
-	sprintf(str, "motorVal1 %d\n motorVal2 %d\n P error value %f\n \n", motorVal1, motorVal2, P);
-	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
+//	char str[64] = {0};
+//	sprintf(str, "pwmLeft %d\n pwmRight %d\n P error value %6.4lf\n \n", pwmLeft, pwmRight, P);
+//	HAL_UART_Transmit(&huart2, (uint8_t*)str, sizeof (str), 10);
 
-	moveForward(&motorVal1, &motorVal2);
+//- helps with big turns
+//	if(dist2 > 70){
+//		moveForward(&pwmLeft, &pwmRight);
+//	}
+
+
+	double turnFactor = (100 - dist2)/100.0f;
+//	double turnFactor = 1.2;
+//	if (dist2 > 70){ //if middle sensor sees at least 80% RED
+//		turnFactor = 0.3;
+//	}//if middle on red, turn less
+
+
+	if (P < -0.2){
+		pwmLeft = (uint32_t)(pwmLeft*turnFactor);
+		pwmRight = (uint32_t)(pwmRight*turnFactor);
+		moveRight(&pwmLeft);
+	} else if (P > 0.2){
+		pwmLeft = (uint32_t)(pwmLeft*turnFactor);
+		pwmRight = (uint32_t)(pwmRight*turnFactor);
+		moveLeft(&pwmRight);
+	} else {
+		moveForward(&pwmLeft, &pwmRight);
+	}
+
+
+
+
+//	if (P < -0.2 && dist2 < 65){
+//		moveRight(&pwmLeft);
+//	} else if (P > 0.2 && dist2 < 65){
+//		moveLeft(&pwmRight);
+//	} else
+//	{
+//		moveForward(&pwmLeft, &pwmRight);
+//	}
+
+
 
 }
 
