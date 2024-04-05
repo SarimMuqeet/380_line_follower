@@ -159,7 +159,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-//  release();
+  release();
+
   while (1)
   {
 	  runStateMachine();

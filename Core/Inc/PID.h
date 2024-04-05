@@ -3,13 +3,13 @@
 
 double Kp = 0.075;
 double Ki = 0;
-double Kd = 0.55; //0.4
+double Kd = 0.7; //0.4
 float P, I, D;
 uint32_t lastError = 0;
-double base = 0.285; //0.265
+double base = 0.31; //0.265
 double calibrateLeft = 1;
 double calibrateRight = 1;
-double baseTurn = 0.243; //0.243
+double baseTurn = 0.25; //0.243
 double baseTurnLeft = baseTurn*calibrateLeft;
 double baseTurnRight = baseTurn*calibrateLeft;
 
